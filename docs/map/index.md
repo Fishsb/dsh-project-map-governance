@@ -14,7 +14,7 @@
 - [文件级地图](tree/)（粒度：文件级（全量））
 - [工程约定](conventions.md) — 按需创建（技术栈/命令/模式）
 - [架构决策](decisions/README.md) — ADR 记录（新增：`node <skill>/scripts/adr.mjs . "<标题>"`）
-- [更新日志](../CHANGELOG.md)
+- [更新日志](../../CHANGELOG.md)
 
 > **地图边界**：按引擎约定，根级通用文档（AGENTS/CLAUDE/README/CHANGELOG/LICENSE/CONTRIBUTING/CODE_OF_CONDUCT）与根级配置文件（package.json/tsconfig.json 等）不入 tree 登记；前者见仓库根，后者见 `root/package_json.md`、`root/tsconfig_json.md`（语义字段待人工/agent 补充）。
 

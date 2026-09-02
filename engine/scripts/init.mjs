@@ -18,12 +18,11 @@ import * as P from './lib-parse.mjs';
 const SKILL_DIR = path.resolve(fileURLToPath(import.meta.url), '..', '..');
 const SKILL_POSIX = SKILL_DIR.replace(/\\/g, '/');
 
-// ---- 治理边界（与 sync/check 同代配套）----
-const IGNORE_NAMES = new Set(['.git', 'node_modules', 'dist', 'build', '__pycache__', '.venv', 'venv', '.cache', '.next', 'target', '.DS_Store', 'docs', '.internal', 'assets']);
-const IGNORE_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.map', '.tar', '.gz', '.zip', '.lock', '.exe', '.dll', '.bin']);
+// ---- 治理边界：单源 = lib-parse（勿在本地重复定义）----
+const IGNORE_NAMES = P.IGNORE_NAMES;
+const IGNORE_EXT = P.BINARY_EXT;   // init 的扩展名过滤 = lib-parse BINARY_EXT（含 .map/.lock 并集）
 const PROTECTED_TREE = new Set(['index', 'files', 'root-files']);
-// 根级通用文档/隐藏元数据：不入 tree（与 sync ROOT_DOC 对称）
-const ROOT_DOC = new Set(['AGENTS.md', 'CLAUDE.md', 'CHANGELOG.md', 'README.md', 'README.en.md', 'LICENSE', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', '.gitignore', '.gitattributes', '.gitmodules', '.editorconfig']);
+const ROOT_DOC = P.ROOT_DOC;
 // 档位阈值：文件数 < AUTO_FILES → files 级；< AUTO_DIRS → dirs 级；否则 modules 级
 const AUTO_FILES = 500;
 const AUTO_DIRS = 2000;
@@ -55,7 +54,7 @@ function parseArgs(argv) {
   return args;
 }
 
-const isCfgFile = (name) => /^\.?[a-zA-Z0-9_\-]+\.(json|ya?ml|toml|ini|cfg|lock)$/.test(name);
+const isCfgFile = P.isCfgFile;
 const human = (n) => (n >= 1024 ? `${(n / 1024).toFixed(1)} KB` : `${n} B`);
 const safeName = (s) => s.replace(/[^a-zA-Z0-9_\-\u4e00-\u9fa5]/g, '_');
 
@@ -216,7 +215,7 @@ function build(meta) {
   else indexLines.push(`- [文件索引](tree/)（粒度：${levelLabel}；全量清单运行时 \`sync --list\` 查看）`);
   indexLines.push('- [工程约定](conventions.md) — 按需创建（技术栈/命令/模式）');
   indexLines.push('- [架构决策](decisions/README.md) — ADR 记录（新增：`node <skill>/scripts/adr.mjs . "<标题>"`）');
-  indexLines.push('- [更新日志](../CHANGELOG.md)');
+  indexLines.push('- [更新日志](../../CHANGELOG.md)');
   indexLines.push('', '## Optional', '');
   indexLines.push('- memo/ — 按需深挖的细节文档（关键符号/决策/坑）');
   indexLines.push('- devref/ — 本地开发参考（gitignore 排除，不推 GitHub）');

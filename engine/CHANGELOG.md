@@ -12,6 +12,11 @@
 
 ### Fixed
 
+- **治理逻辑完整性（规则引擎）**：
+  - 边界常量单源化进 lib-parse（IGNORE_NAMES/ROOT_DOC/BINARY_EXT/isCfgFile/safeName/governedRootDocs），check/sync/init 统一 import。
+  - semantics 守护根级配置文件模块 root 文档；待填判定兼容异常拼接。
+  - dead-links 扩展扫 root/index/decisions 内部链接；修复 init 模板与 devref.mjs 的 `../` 少一层死链。
+  - changelog 无 tag 基线时给 warn 提示（不再静默）。
 - **init 死链根因**：文件类模块（package.json/tsconfig.json 等）不再生成 `> 文件级细节见 ../tree/<模块>.md` 尾行——此前 init 一出生就为配置文件模块写入指向不存在 tree 文件的死链（dead-links 只扫 tree/ 故静默）。
 - **sync root/ 孤儿清理**：模块删除后 `root/*.md` 不再残留（原只清 tree/）；模块集合 = 目录模块 + 根级配置文件模块，配置文件 root 文档正确保留。
 - **sync 空目录提前退出**：治理范围内无目录模块时不再 `process.exit(0)` 跳过清理——此前会遗留全部陈旧 tree/root 文档。

@@ -28,6 +28,12 @@
 - 引擎缺陷（随本仓 engine/）：init 不再为配置文件模块生成 `../tree/<模块>.md` 死链尾行；sync 增补 root/ 孤儿文档清理、模块清空时不再提前退出（此前 tree/root 陈旧文档残留）。本仓库 root/package_json.md、root/tsconfig_json.md 对应死链尾行已清除。
 - **硬编码清理**：engine/test/smoke.mjs 的引擎路径由「C:\Users\lk\.dsh\skills\... 绝对路径」改为 import.meta.url 自定位本仓 engine/scripts（可移植）；engine/scripts/init.mjs 删除 hermes 机器特定 node 探测候选（保留 execPath/DSH_NODE/Program Files/which 通用探测）。
 - **废弃引用清理**：engine/SKILL.md 删除指向已删独立引擎仓的引用、`<skill-dir>` 通用化为「引擎部署位置（本仓 engine/ 或副本）」；engine/CHANGELOG.md 头部改为「随插件仓 engine/ 维护」，独立仓方案条目标注已废弃（历史记录）。
+- **治理逻辑完整性修复（规则引擎）**：
+  - 边界常量单源化：IGNORE_NAMES/ROOT_DOC/BINARY_EXT/isCfgFile/safeName 收进 lib-parse，check/sync/init 统一 import（消除三处漂移，取并集含 .DS_Store/.map/.lock）。
+  - semantics 扩展守护根级配置文件模块（package_json/tsconfig_json root 文档），不再"三无孤儿"；待填判定兼容异常拼接。
+  - dead-links 扩展扫描 root/index/decisions 内链接（此前 root 内部死链盲区）；修复 index.md 与 init 模板「更新日志」链接少一层 `../` 的死链；修复 devref.mjs 登记 index 链接 `../` → `../../`。
+  - changelog 无 git tag 基线时给 warn 提示（此前 error 静默失效）。
+  - governance.schema.json 补 untracked-strict 粒度降级语义说明。
 
 ## [0.1.0] - 2026-09-02
 

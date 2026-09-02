@@ -26,13 +26,12 @@ for (let i = 2; i < process.argv.length; i++) {
 const target = path.resolve(targetArg || '');
 if (!targetArg || !fs.existsSync(target)) usage();
 
-// ---- 治理边界（与 sync/init 同代配套）----
-const IGNORE_NAMES = new Set(['.git', 'node_modules', 'dist', 'build', '__pycache__', '.venv', 'venv', '.cache', '.next', 'target', 'docs', '.internal', 'assets']);
-const BINARY_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.tar', '.gz', '.zip', '.exe', '.dll', '.bin']);
-const isCfgFile = (n) => /^\.?[a-zA-Z0-9_\-]+\.(json|ya?ml|toml|ini|cfg|lock)$/.test(n);
-const isBinary = (p) => BINARY_EXT.has(path.extname(p).toLowerCase());
+// ---- 治理边界：单源 = lib-parse（勿在本地重复定义）----
+const IGNORE_NAMES = P.IGNORE_NAMES;
+const isCfgFile = P.isCfgFile;
+const isBinary = P.isBinary;
+const ROOT_DOC = P.ROOT_DOC;
 const stripMarkdown = (s) => s.replace(/^[-*]\s*`?([^`—|]*?)`?.*$/, '$1').trim();
-const ROOT_DOC = new Set(['AGENTS.md', 'CLAUDE.md', 'CHANGELOG.md', 'README.md', 'README.en.md', 'LICENSE', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', '.gitignore', '.gitattributes', '.gitmodules', '.editorconfig']);
 
 // ---- 配置（自动迁移 legacy → v3 rules）----
 const mapDir = path.join(target, 'docs', 'map');
@@ -113,14 +112,35 @@ const HINT_LINE = cfgHints.maxDocLines ?? 200;
 const HINT_INDEX_MODULES = cfgHints.maxIndexModules ?? 15;
 const HINT_TREE_NOTED = cfgHints.maxTreeNoted ?? 100;
 
-// 1) dead-links（恒 error）
+// 1) dead-links（恒 error）——tree 登记 + 治理文档（root/index/decisions）内本地引用
 {
-  const problems = [...mapped].filter((p) => {
+  // 收集 root/、index.md、decisions/ 内指向真实文件的本地引用
+  const docRefs = new Set();
+  const scanDoc = (file) => {
+    const t = P.readText(file);
+    if (!t) return;
+    for (const ref of P.collectLocalFileRefs(t, path.dirname(file), target)) docRefs.add(ref);
+  };
+  const rootDir = path.join(mapDir, 'root');
+  if (fs.existsSync(rootDir)) for (const f of fs.readdirSync(rootDir)) { if (f.endsWith('.md')) scanDoc(path.join(rootDir, f)); }
+  scanDoc(path.join(mapDir, 'index.md'));
+  const decDir = path.join(mapDir, 'decisions');
+  if (fs.existsSync(decDir)) for (const f of fs.readdirSync(decDir)) { if (f.endsWith('.md')) scanDoc(path.join(decDir, f)); }
+
+  // tree 登记引用：保持旧豁免（tree 不含 docs/ 登记）
+  const mappedProblems = [...mapped].filter((p) => {
     if (isCfgFile(path.basename(p))) return false;
     if (isBinary(p)) return false;
     if (p.startsWith('docs/') || p.startsWith('.internal/') || p.startsWith('assets/')) return false;
     return !real.has(p);
   });
+  // 治理文档内部引用：全量校验存在性（docs/map 内部互链也查）
+  const docProblems = [...docRefs].filter((p) => {
+    if (isCfgFile(path.basename(p))) return false;
+    if (isBinary(p)) return false;
+    return !fs.existsSync(path.join(target, p));
+  });
+  const problems = [...mappedProblems, ...docProblems.map((p) => `治理文档引用缺失: ${p}`)];
   if (problems.length) add('dead-links', problems);
 }
 
@@ -184,6 +204,9 @@ const HINT_TREE_NOTED = cfgHints.maxTreeNoted ?? 100;
             const hasReal = /-(?!\s*无\s*$)(?!\s*-?\s*none\s*$)/m.test(P.extractUnreleased(text) || '');
             if (!hasReal) problems.push('自上次发布有功能提交，但 CHANGELOG [Unreleased] 无实质条目（用户可见变更请记入）');
           }
+        } else if (sev('changelog') === 'error' || sev('changelog') === 'warn') {
+          // 无 tag 基线：changelog 门禁无从比较，提示规则未生效（不拦截）
+          warns.push({ rule: 'changelog', problems: ['仓库无 git tag 基线：changelog 门禁无法生效（打 tag 后此规则才起作用）'] });
         }
       }
     }
@@ -191,16 +214,17 @@ const HINT_TREE_NOTED = cfgHints.maxTreeNoted ?? 100;
   add('changelog', problems);
 }
 
-// 5) semantics（职责/负责/影响 待填）
+// 5) semantics（职责/负责/影响 待填）——覆盖全部治理 root 文档（目录 + 根级配置文件模块）
 {
   const problems = [];
   if (sev('semantics') !== 'off') {
-    for (const d of dirs) {
+    const govDocs = P.governedRootDocs(target, dirs);
+    for (const d of govDocs) {
       const text = P.readText(path.join(mapDir, 'root', `${d}.md`));
       if (!text) continue;
       const fields = P.extractModuleFields(text);
       for (const [label, v] of [['职责', fields.duty], ['负责', fields.owner], ['影响', fields.impact]]) {
-        if (v === '（待填）') problems.push(`${d}.${label}=（待填）`);
+        if (v === '（待填）' || v.startsWith('（待填）')) problems.push(`${d}.${label}=（待填）`);
       }
     }
   }

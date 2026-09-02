@@ -19,6 +19,31 @@ export const CONFIG_VERSION = 3;
 export const RULE_IDS = ['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene'];
 export const SEVERITIES = ['off', 'warn', 'error'];
 
+// ---- 治理边界（单一源：check/sync/init 共用，勿在各脚本重复定义）----
+// 取三脚本语义并集：跨平台点目录/构建产物/docs 治理层/瞬态数据一律不入图
+export const IGNORE_NAMES = new Set(['.git', 'node_modules', 'dist', 'build', '__pycache__', '.venv', 'venv', '.cache', '.next', 'target', 'docs', '.internal', 'assets', '.DS_Store']);
+export const BINARY_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.map', '.tar', '.gz', '.zip', '.lock', '.exe', '.dll', '.bin']);
+export const ROOT_DOC = new Set(['AGENTS.md', 'CLAUDE.md', 'CHANGELOG.md', 'README.md', 'README.en.md', 'LICENSE', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', '.gitignore', '.gitattributes', '.gitmodules', '.editorconfig']);
+export const isCfgFile = (n) => /^\.?[a-zA-Z0-9_\-]+\.(json|ya?ml|toml|ini|cfg|lock)$/.test(n);
+export const isBinary = (p) => BINARY_EXT.has(path.extname(p).toLowerCase());
+export const safeName = (s) => s.replace(/[^a-zA-Z0-9_\-\u4e00-\u9fa5]/g, '_');
+
+/**
+ * 治理 root 文档集合 = 目录模块（dirs）+ 根级配置文件模块（package.json 等）的 safeName。
+ * 与 init 的模块集合对齐：init 把根级配置文件也算模块（生成 root/*.md），
+ * sync/check 需守护这些文档（语义/死链），避免"三无孤儿"。
+ */
+export function governedRootDocs(target, dirs) {
+  const set = new Set(dirs.map(safeName));
+  let entries; try { entries = fs.readdirSync(target, { withFileTypes: true }); } catch { entries = []; }
+  for (const ent of entries) {
+    if (!ent.isFile()) continue;
+    if (IGNORE_NAMES.has(ent.name) || ent.name.startsWith('.') || ROOT_DOC.has(ent.name)) continue;
+    if (isCfgFile(ent.name)) set.add(safeName(ent.name));
+  }
+  return set;
+}
+
 export function readText(file) {
   try { return fs.readFileSync(file, 'utf8'); } catch { return null; }
 }
@@ -158,6 +183,34 @@ export function extractTriage(text) {
     if (m) set.add(`${m[1]} → ${m[2]}`);
   }
   return set;
+}
+
+// ---- 治理文档本地引用收集（dead-links 扩展：扫 root/index/decisions 内相对文件引用）----
+// 从 md 文本收集"指向真实文件"的相对引用，返回相对 rootDir 的 posix 路径。
+// 收集两类：
+//   1) markdown 导航链接 ](相对路径)
+//   2) 反引号内以 ../ 开头的相对文件引用（root 文档"文件级细节见 ../tree/x.md"固定格式）
+// 豁免：http(s) 外链、锚点/裸目录/命令（含空格、<skill>、node）、占位 conventions.md、相关模块节内模块路径反引号（非 ../ 开头）。
+const MD_LINK_RE = /\]\(([^)]+)\)/g;
+const REL_BK_RE = /`(\.\.\/[^`\n]+)`/g;
+export function collectLocalFileRefs(text, docDir, rootDir) {
+  const out = new Set();
+  const candidates = [];
+  for (const m of text.matchAll(MD_LINK_RE)) candidates.push(m[1]);
+  for (const m of text.matchAll(REL_BK_RE)) candidates.push(m[1]);
+  for (let raw of candidates) {
+    raw = raw.trim();
+    if (!raw || raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('#')) continue;
+    if (raw.includes(' ') || raw.startsWith('<') || raw.includes('*')) continue;
+    const frag = raw.indexOf('#'); if (frag >= 0) raw = raw.slice(0, frag);
+    if (raw.endsWith('/')) continue;
+    const abs = path.resolve(docDir, raw);
+    const rel = path.relative(rootDir, abs).replace(/\\/g, '/');
+    if (rel.startsWith('..')) continue; // 仓库外
+    if (raw.includes('conventions')) continue; // "按需创建"占位
+    out.add(rel);
+  }
+  return out;
 }
 
 // ---- hygiene ----

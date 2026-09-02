@@ -24,7 +24,7 @@
       "additionalProperties": { "enum": ["off", "warn", "error"] },
       "properties": {
         "dead-links": { "enum": ["error"], "description": "地图引用不存在文件（核心，恒 error）" },
-        "untracked-strict": { "enum": ["off", "warn", "error"], "description": "files 粒度下未登记新文件" },
+        "untracked-strict": { "enum": ["off", "warn", "error"], "description": "files 粒度下未登记新文件（error 仅在 files 粒度=门禁；dirs/modules 粒度下即使 error 也降为提示，因该粒度本就不要求逐文件登记）" },
         "relatedness": { "enum": ["off", "warn", "error"], "description": "跨模块关联缺「相关模块」标记（出边+反向；triage 豁免）" },
         "changelog": { "enum": ["off", "warn", "error"], "description": "CHANGELOG 门禁" },
         "semantics": { "enum": ["off", "warn", "error"], "description": "root/*.md 职责/负责/影响 待填" },

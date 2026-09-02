@@ -111,7 +111,7 @@ function registerIndex(project, dir, docs) {
   let content = fs.readFileSync(file, 'utf8');
   const items = docs
     .filter((d) => !content.includes(`${dir}/${d.name}`))
-    .map((d) => `- [开发参考：${d.note}](../${dir}/${d.name}): ${d.name}`)
+    .map((d) => `- [开发参考：${d.note}](../../${dir}/${d.name}): ${d.name}`)
     .join('\n');
   if (!items) return;
   if (content.includes('## Optional')) {

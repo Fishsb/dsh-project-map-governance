@@ -28,11 +28,11 @@ function parseArgs(argv) {
   return args;
 }
 
-// ---- 治理边界（与 check.mjs / init.mjs 同代配套）----
-const IGNORE_NAMES = new Set(['.git', 'node_modules', 'dist', 'build', '__pycache__', '.venv', 'venv', '.cache', '.next', 'target', 'docs', '.internal', 'assets']);
-const BINARY_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.tar', '.gz', '.zip', '.exe', '.dll', '.bin']);
-const isCfgFile = (n) => /^\.?[a-zA-Z0-9_\-]+\.(json|ya?ml|toml|ini|cfg|lock)$/.test(n);
-const ROOT_DOC = new Set(['AGENTS.md', 'CLAUDE.md', 'CHANGELOG.md', 'README.md', 'README.en.md', 'LICENSE', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md']);
+// ---- 治理边界：单源 = lib-parse（勿在本地重复定义）----
+const IGNORE_NAMES = P.IGNORE_NAMES;
+const BINARY_EXT = P.BINARY_EXT;
+const isCfgFile = P.isCfgFile;
+const ROOT_DOC = P.ROOT_DOC;
 const PROTECTED_TREE = new Set(['index', 'files', 'root-files']);
 const human = (n) => (n >= 1024 ? `${(n / 1024).toFixed(1)} KB` : `${n} B`);
 
