@@ -13,5 +13,3 @@
 - `src/` — 本模块编译 src 源码
 - `scripts/build.sh` — 本模块由 build.sh 以 `tsc -p tsconfig.json` 调用
 - `package.json` — typecheck 脚本指向本配置
-
-> 文件级细节见 ../tree/tsconfig_json.md。

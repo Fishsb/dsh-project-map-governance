@@ -21,6 +21,7 @@
 ### Fixed
 
 - docs/map/decisions/ADR-0001.md 状态行生成缺陷（`acceptedproposed` 拼接）已修正为规范枚举。
+- 引擎缺陷（随 skill 目录）：init 不再为配置文件模块生成 `../tree/<模块>.md` 死链尾行；sync 增补 root/ 孤儿文档清理、模块清空时不再提前退出（此前 tree/root 陈旧文档残留）。本仓库 root/package_json.md、root/tsconfig_json.md 对应死链尾行已清除。
 
 ## [0.1.0] - 2026-09-02
 

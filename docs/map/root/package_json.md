@@ -13,5 +13,3 @@
 - `src/` — 双向：package.json 声明的依赖与 src 的 import 契约同构
 - `scripts/build.sh` — 本模块 build 脚本指向 scripts/build.sh
 - `tsconfig.json` — 本模块 typecheck 脚本依赖 tsconfig 编译配置
-
-> 文件级细节见 ../tree/package_json.md。
