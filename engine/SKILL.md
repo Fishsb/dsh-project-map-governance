@@ -169,8 +169,7 @@ node "<skill-dir>/scripts/mcp-server.mjs"                               # MCP st
 
 > 注入/构建说明：插件 `lib/` 已含产物（本机无 DSH 源码 checkout 时手工编译）；有 checkout 的环境用 `scripts/build.sh`（dev_scaffold_plugin 生成）重新编译。三方共享同一引擎，行为一致。
 
-> `<skill-dir>` = `C:\Users\lk\.dsh\skills\project-map-governance`（运行部署副本）
-> **引擎源码仓** = `D:\FF\dsh-project-map-governance-engine`（git 版本控制 + 自治理 self-hosting：AGENTS/docs/map + pre-commit；改动引擎先改源码仓 → 回归 `test/smoke.mjs` → 同步本 skill 副本）。
+> `<skill-dir>` = 引擎部署位置（含 `scripts/` 的目录）。本引擎源码随 DSH 插件仓 `dsh-project-map-governance` 的 `engine/` 子目录分发（ADR-0002）；本机 skill 运行副本在 `C:\Users\lk\.dsh\skills\project-map-governance`。引擎自定位基于 `import.meta.url`，部署到任意位置即插即用；改动引擎后需同步部署副本。
 > **v3（2026-09-02）**：架构根治 + 形态升级——规则引擎化（`rules` 表 + severity + `--json`）、`governance.schema.json` 语义（configVersion 自动迁移）、`lib-parse` 统一解析层、`autoLevel` 阈值配置、`status/reconcile` 命令、内置 `test/smoke.mjs`（84 用例）、DSH 插件（6 个原生工具）与 MCP 薄包装。引擎即单一事实源，hook / 插件 / MCP 三方共用。
 > **v2.2 / v2.1 / v2**：见上（信息类主辅分离、披露层级、关联闭环、语义门禁等）。**v1 地图迁移**：任意版本 `sync.mjs` 跑一遍即自动按配置重写 tree（职责保留）；配置首次运行自动升级到 v3。
 > 退出码约定：`0` 成功/一致，`1` 失败/漂移，`2` 参数错误。

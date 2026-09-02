@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-// project-map-governance v2 冒烟回归：T1 小项目 files 档 / T2 dirs 自动降档 / T3 v1 迁移+手动降档
+// project-map-governance v3 冒烟回归：T1 小项目 files 档 / T2 dirs 自动降档 / T3 v1 迁移+手动降档
 // T4 --links 关联候选与守恒提示 / T5 规模审查提示 / T6 devref 端到端 / T7 白名单 roots
+// 引擎脚本自定位：本文件 engine/test/smoke.mjs → engine/scripts（与本仓 engine/ 分发一致，可移植）
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawnSync, spawn } from 'node:child_process';
 
-const SKILL = 'C:/Users/lk/.dsh/skills/project-map-governance/scripts';
+const SKILL = path.join(path.dirname(path.dirname(fileURLToPath(import.meta.url))), 'scripts');
 const NODE = process.execPath;
 const BASE = path.resolve('.gov-bench', 'smoke');
 fs.rmSync(BASE, { recursive: true, force: true });

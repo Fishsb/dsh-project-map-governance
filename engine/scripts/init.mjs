@@ -389,9 +389,7 @@ function detectNode() {
   const candidates = [
     process.execPath,
     process.env.DSH_NODE,
-    'C:\\Users\\lk\\hermes\\0.20.0\\win-x64\\node\\node.exe',
     'C:\\Program Files\\nodejs\\node.exe',
-    'D:\\lk\\hermes\\0.20.0\\win-x64\\node\\node.exe',
   ];
   for (const c of candidates) { if (c && fs.existsSync(c)) return c; }
   try {

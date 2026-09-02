@@ -1,14 +1,14 @@
 # Changelog — project-map-governance 引擎
 
-引擎（`scripts/*.mjs`）随本 skill 目录独立维护与演进。本文件按 Keep a Changelog 记录引擎的用户可感知变更；DSH 插件发布节奏见插件仓库 `CHANGELOG.md`（引擎与插件版本解耦）。
+引擎（`engine/scripts/*.mjs`）随 DSH 插件仓 `dsh-project-map-governance` 的 `engine/` 子目录维护与演进（ADR-0002，单一仓库双目录）。本文件按 Keep a Changelog 记录引擎的用户可感知变更；插件契约层变更见插件仓根 `CHANGELOG.md`。
 
-> 本仓 = 引擎源码仓（git + 自治理）；部署运行副本 = `C:\Users\lk\.dsh\skills\project-map-governance`（改动引擎：改本仓 → 回归 `test/smoke.mjs` → 同步 skill 副本）。
+> 引擎源码在本仓 `engine/`；部署运行副本 = 本机 skill 目录 `C:\Users\lk\.dsh\skills\project-map-governance`（改动引擎：改本仓 → 回归 `engine/test/smoke.mjs` → 同步 skill 副本）。历史上曾短暂采用独立引擎仓方案（见下方 [Unreleased] 标注），已废弃并并入本仓。
 
 ## [Unreleased]
 
 ### Added
 
-- **引擎源码仓 + 自治理（self-hosting）**：引擎源码纳入 git 版本控制（D:\FF\dsh-project-map-governance-engine），并用引擎自身 init/sync/check 治理本仓（AGENTS/CLAUDE/docs/map + pre-commit，semantics/changelog 门禁）；skill 目录定位为运行部署副本，SKILL.md 注明源码仓位置。
+- ~~**引擎源码仓 + 自治理（self-hosting）**~~（已废弃，见 ADR-0002）：曾将引擎纳入独立 git 仓 `D:\FF\dsh-project-map-governance-engine` 并自治理；该方案被 ADR-0002 取代（引擎并入插件仓 `engine/` 子目录），独立仓已删除。保留此条仅为记录历史。
 
 ### Fixed
 

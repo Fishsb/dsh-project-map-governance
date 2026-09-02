@@ -26,6 +26,8 @@
 
 - docs/map/decisions/ADR-0001.md 状态行生成缺陷（`acceptedproposed` 拼接）已修正为规范枚举；**引擎 adr.mjs 状态行拼接 bug 根因修复**（`> 状态：.*` 整行替换）。
 - 引擎缺陷（随本仓 engine/）：init 不再为配置文件模块生成 `../tree/<模块>.md` 死链尾行；sync 增补 root/ 孤儿文档清理、模块清空时不再提前退出（此前 tree/root 陈旧文档残留）。本仓库 root/package_json.md、root/tsconfig_json.md 对应死链尾行已清除。
+- **硬编码清理**：engine/test/smoke.mjs 的引擎路径由「C:\Users\lk\.dsh\skills\... 绝对路径」改为 import.meta.url 自定位本仓 engine/scripts（可移植）；engine/scripts/init.mjs 删除 hermes 机器特定 node 探测候选（保留 execPath/DSH_NODE/Program Files/which 通用探测）。
+- **废弃引用清理**：engine/SKILL.md 删除指向已删独立引擎仓的引用、`<skill-dir>` 通用化为「引擎部署位置（本仓 engine/ 或副本）」；engine/CHANGELOG.md 头部改为「随插件仓 engine/ 维护」，独立仓方案条目标注已废弃（历史记录）。
 
 ## [0.1.0] - 2026-09-02
 
