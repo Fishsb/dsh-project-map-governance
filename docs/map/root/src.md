@@ -10,7 +10,8 @@
 
 ## 相关模块
 <!-- 跨模块影响面：改本模块必须同步检查的模块。方向：本模块影响它 / 本模块依赖它 / 双向。由 sync --links 给候选，人工确认后填。 -->
-- `scripts/` — 双向：src 以引擎脚本为执行后端（依赖）；src 工具注册改动会改变 scripts 各命令的调用契约
+- `engine/` — 双向：src 把 engine/scripts/*.mjs 命令注册为 DSH 工具（依赖引擎 CLI/--json 契约，默认 scriptsDir 指向本仓 engine/scripts）；引擎命令行为改动会影响 src 注册工具
+- `scripts/` — 单向：scripts/build.sh 编译 src → lib（构建契约）；src 改动需同步构建
 - `package.json` — 本模块文件：插件清单/依赖/构建脚本与 src 契约同构
 
 > 文件级细节见 ../tree/src.md。

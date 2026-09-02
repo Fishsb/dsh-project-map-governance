@@ -1,0 +1,63 @@
+# Changelog — project-map-governance 引擎
+
+引擎（`scripts/*.mjs`）随本 skill 目录独立维护与演进。本文件按 Keep a Changelog 记录引擎的用户可感知变更；DSH 插件发布节奏见插件仓库 `CHANGELOG.md`（引擎与插件版本解耦）。
+
+> 本仓 = 引擎源码仓（git + 自治理）；部署运行副本 = `C:\Users\lk\.dsh\skills\project-map-governance`（改动引擎：改本仓 → 回归 `test/smoke.mjs` → 同步 skill 副本）。
+
+## [Unreleased]
+
+### Added
+
+- **引擎源码仓 + 自治理（self-hosting）**：引擎源码纳入 git 版本控制（D:\FF\dsh-project-map-governance-engine），并用引擎自身 init/sync/check 治理本仓（AGENTS/CLAUDE/docs/map + pre-commit，semantics/changelog 门禁）；skill 目录定位为运行部署副本，SKILL.md 注明源码仓位置。
+
+### Fixed
+
+- **init 死链根因**：文件类模块（package.json/tsconfig.json 等）不再生成 `> 文件级细节见 ../tree/<模块>.md` 尾行——此前 init 一出生就为配置文件模块写入指向不存在 tree 文件的死链（dead-links 只扫 tree/ 故静默）。
+- **sync root/ 孤儿清理**：模块删除后 `root/*.md` 不再残留（原只清 tree/）；模块集合 = 目录模块 + 根级配置文件模块，配置文件 root 文档正确保留。
+- **sync 空目录提前退出**：治理范围内无目录模块时不再 `process.exit(0)` 跳过清理——此前会遗留全部陈旧 tree/root 文档。
+
+## [v3] - 2026-09-02
+
+### Added
+
+- **规则引擎化**：`docs/map/governance.json` 声明 `rules` 表（10 条规则：dead-links / untracked-strict / relatedness / changelog / semantics / size / root-consistency / index-consistency / index-format / doc-hygiene），severity `off|warn|error`，error 级 = pre-commit 门禁 exit1。
+- **legacy 配置自动迁移**：v1/v2.x 字段（strict/strictLinks/changelog/strictSemantics）首跑自动迁移为 rules（configVersion 3），无需手改。
+- **`lib-parse.mjs` 统一解析层**：文档格式与配置 schema 单一源（init/sync/check/adr/reconcile/插件/MCP 共用）。
+- **`status.mjs`**：治理状态快照（配置/粒度/模块/关键文档存在性/ADR 数/reconcile 天数）。
+- **`reconcile.mjs`**：文档卫生清单（git 改动/疤痕/超期），`--done` 落时间戳。
+- **`check --json`** 结构化输出（DSH 插件 / MCP 消费）。
+- **`autoLevel` 阈值可配**（governance.json.autoLevel）。
+- **DSH 插件 6 原生工具 + MCP stdio 薄包装**（`mcp-server.mjs`）：三方（hook/CLI/插件）共享同一引擎。
+- **引擎回归测试**：`test/smoke.mjs`（84 用例，覆盖三档粒度/迁移/门禁/ADR/卫生）。
+
+### Changed
+
+- 引擎内部命令入口统一 v3；`configVersion` 恒为 3。
+
+## [v2.2] - 2026-08-xx
+
+### Added
+
+- `adr.mjs` 支持 `--status`，ADR 登记进 decisions/README.md 索引。
+
+## [v2.1] - 2026-08-xx
+
+### Added
+
+- `lib-links.mjs` 公共跨模块扫描器（相对/绝对/点风格/`<>`/Python import），check `links:true` 时自扫描，出边+反向双向校验。
+- link-triage 噪音豁免（`docs/map/memo/link-triage.md`）。
+
+## [v2] - 2026-08-xx
+
+### Added
+
+- 信息类主辅分离：主文档按主题组织（摘要/模块地图/关键文件/约定/决策），渐进披露 L0/L1/L2。
+- 模块关联层：root/<模块>.md「相关模块」节；粒度 files→dirs→modules 自动降档。
+- AGENTS.md + CLAUDE.md 双写；index.md llms.txt 式；规模审查提示（200 行/15 模块/100 文件）。
+- `devref.mjs`：官方开发参考文档部署（docs/devref/ 本地化，gitignore 排除）。
+
+## [v1] - 2026-07-xx
+
+### Added
+
+- 初版：AGENTS.md + docs/map（root/tree）+ CHANGELOG + pre-commit；tree 全量文件登记。

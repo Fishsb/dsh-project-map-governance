@@ -1,11 +1,12 @@
 # 项目地图 · dsh-project-map-governance-plugin
 
-> dsh-project-map-governance：DeepSeek Harness 原生**项目地图 + 更新日志治理**工具包（规则引擎化 check，AGENTS/docs/map 防漂移）。本仓库是引擎的**插件薄契约层**——把 skill 目录的 6 个治理脚本注册为 DSH 原生工具；引擎（单一事实源）随 skill 目录独立演进。本文件是 LLM 友好导航（llms.txt 式）：先读这一句 + 导航，细节按链接按需取。
+> dsh-project-map-governance：DeepSeek Harness 原生**项目地图 + 更新日志治理**工具包（规则引擎化 check，AGENTS/docs/map 防漂移）。单一仓库双目录：`src/` 插件契约层 + `engine/` 引擎源码（ADR-0002）。本文件是 LLM 友好导航（llms.txt 式）：先读这一句 + 导航，细节按链接按需取。
 
 ## 导航
 
-- `src` — 见 root/src.md（Harness 插件入口与派生工具链，同构 SDK 上下文与 Codis 注入）
+- `src` — 见 root/src.md（插件契约层：注册 6 个 DSH 原生工具）
 - `scripts` — 见 root/scripts.md（构建与素材管理（build.sh 等），源码无关）
+- `engine` — 见 root/engine.md（规则引擎：init/sync/check/adr/status/reconcile/devref + 公共层 + MCP）
 
 ## 治理
 

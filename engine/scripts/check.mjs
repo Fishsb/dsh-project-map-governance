@@ -1,0 +1,379 @@
+#!/usr/bin/env node
+// project-map-governance · check.mjs（v3，规则引擎）
+// 规则表驱动（governance.json.rules，severity: off|warn|error；error 级触发 exit 1）：
+//   dead-links(默认 error) / untracked-strict / relatedness / changelog / semantics
+//   size / root-consistency / index-consistency / index-format / doc-hygiene
+// legacy 配置（strict/strictLinks/changelog/strictSemantics/links）由 lib-parse.migrateConfig 自动迁移。
+// 用法: node check.mjs <项目路径> [--strict] [--json]
+// 退出码: 0=无 error 级问题（可带 warn 提示） 1=有 error 级问题 2=参数错误
+// --json：只输出结构化结果（插件/MCP 用）：
+//   { ok, configVersion, level, dirs, errors: [{rule, problems}], warns: [{rule, problems}] }
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { findCrossModuleLinks } from './lib-links.mjs';
+import * as P from './lib-parse.mjs';
+
+function usage() { console.error('用法: node check.mjs <项目路径> [--strict] [--json]'); process.exit(2); }
+
+let targetArg = null, cliStrict = false, jsonMode = false;
+for (let i = 2; i < process.argv.length; i++) {
+  const a = process.argv[i];
+  if (a === '--strict') cliStrict = true;
+  else if (a === '--json') jsonMode = true;
+  else if (!a.startsWith('--')) targetArg = a;
+}
+const target = path.resolve(targetArg || '');
+if (!targetArg || !fs.existsSync(target)) usage();
+
+// ---- 治理边界（与 sync/init 同代配套）----
+const IGNORE_NAMES = new Set(['.git', 'node_modules', 'dist', 'build', '__pycache__', '.venv', 'venv', '.cache', '.next', 'target', 'docs', '.internal', 'assets']);
+const BINARY_EXT = new Set(['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.tar', '.gz', '.zip', '.exe', '.dll', '.bin']);
+const isCfgFile = (n) => /^\.?[a-zA-Z0-9_\-]+\.(json|ya?ml|toml|ini|cfg|lock)$/.test(n);
+const isBinary = (p) => BINARY_EXT.has(path.extname(p).toLowerCase());
+const stripMarkdown = (s) => s.replace(/^[-*]\s*`?([^`—|]*?)`?.*$/, '$1').trim();
+const ROOT_DOC = new Set(['AGENTS.md', 'CLAUDE.md', 'CHANGELOG.md', 'README.md', 'README.en.md', 'LICENSE', 'CODE_OF_CONDUCT.md', 'CONTRIBUTING.md', '.gitignore', '.gitattributes', '.gitmodules', '.editorconfig']);
+
+// ---- 配置（自动迁移 legacy → v3 rules）----
+const mapDir = path.join(target, 'docs', 'map');
+if (!fs.existsSync(mapDir)) { console.error('未找到 docs/map —— 先用 init.mjs 初始化治理。'); process.exit(1); }
+const config = P.loadConfig(target); // 迁移并落盘
+const level = ['files', 'dirs', 'modules'].includes(config.level) ? config.level : 'files';
+const extraIgnore = new Set(Array.isArray(config.ignore) ? config.ignore : []);
+const roots = Array.isArray(config.roots) && config.roots.length ? new Set(config.roots) : null;
+const rules = { ...P.defaultRules(), ...(config.rules || {}) };
+const sev = (id) => rules[id] === 'error' || rules[id] === 'warn' ? rules[id] : 'off';
+const isRuleError = (id) => rules[id] === 'error' || (cliStrict && id === 'untracked-strict');
+const runGit = (args) => {
+  try {
+    const r = spawnSync('git', args, { cwd: target, encoding: 'utf8', timeout: 15000 });
+    return r.status === 0 ? r.stdout : '';
+  } catch { return ''; }
+};
+
+const dirs = (function () {
+  const out = [];
+  let entries; try { entries = fs.readdirSync(target, { withFileTypes: true }); } catch { entries = []; }
+  for (const ent of entries) {
+    if (!ent.isDirectory()) continue;
+    if (IGNORE_NAMES.has(ent.name) || extraIgnore.has(ent.name) || ent.name.startsWith('.')) continue;
+    if (roots && !roots.has(ent.name)) continue;
+    out.push(ent.name);
+  }
+  return out.sort((a, b) => a.localeCompare(b));
+})();
+
+// ---- 真实文件 / 地图登记 ----
+function getRealFiles(dir, prefix = '') {
+  const out = new Set();
+  let entries; try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return out; }
+  for (const ent of entries) {
+    if (IGNORE_NAMES.has(ent.name) || ent.name.startsWith('.')) continue;
+    if (prefix === '' && roots && !roots.has(ent.name)) continue;
+    const rel = prefix ? `${prefix}/${ent.name}` : ent.name;
+    const full = path.join(dir, ent.name);
+    if (ent.isDirectory()) { for (const f of getRealFiles(full, rel)) out.add(f); }
+    else if (!isCfgFile(ent.name) && !isBinary(rel)) out.add(rel);
+  }
+  return out;
+}
+function getMappedFiles() {
+  const mapped = new Set();
+  const treeDir = path.join(mapDir, 'tree');
+  if (!fs.existsSync(treeDir)) return mapped;
+  for (const f of fs.readdirSync(treeDir)) {
+    if (!f.endsWith('.md')) continue;
+    for (const line of P.readText(path.join(treeDir, f)).split('\n')) {
+      const m = line.match(/`([^`]+)`/);
+      let p = m ? m[1] : null;
+      if (!p) { const s = line.trim(); if (s.startsWith('-')) p = stripMarkdown(s); }
+      if (!p) continue;
+      if (p.includes(' ') || p.startsWith('#')) continue;
+      if (p.includes('*') || p.includes('?') || p.endsWith('/') || p.startsWith('../') || p.startsWith('./')) continue;
+      if (!p.includes('/') && !path.extname(p)) continue;
+      mapped.add(p);
+    }
+  }
+  return mapped;
+}
+
+const real = getRealFiles(target);
+const mapped = getMappedFiles();
+
+// ---- 规则执行（每规则产出 problems；severity 决定归类）----
+const errors = [];   // [{rule, problems}]
+const warns = [];    // [{rule, problems}]
+const add = (rule, problems) => {
+  if (!problems.length) return;
+  if (isRuleError(rule)) errors.push({ rule, problems });
+  else warns.push({ rule, problems });
+};
+const cfgHints = config.hints || {};
+const HINT_LINE = cfgHints.maxDocLines ?? 200;
+const HINT_INDEX_MODULES = cfgHints.maxIndexModules ?? 15;
+const HINT_TREE_NOTED = cfgHints.maxTreeNoted ?? 100;
+
+// 1) dead-links（恒 error）
+{
+  const problems = [...mapped].filter((p) => {
+    if (isCfgFile(path.basename(p))) return false;
+    if (isBinary(p)) return false;
+    if (p.startsWith('docs/') || p.startsWith('.internal/') || p.startsWith('assets/')) return false;
+    return !real.has(p);
+  });
+  if (problems.length) add('dead-links', problems);
+}
+
+// 2) untracked-strict（files 粒度；error 由 rules/--strict 决定）
+{
+  let untracked = [...real].filter((p) => !mapped.has(p));
+  untracked = untracked.filter((p) => {
+    if (p.startsWith('docs/map/')) return false;
+    if (ROOT_DOC.has(p)) return false;
+    const base = path.basename(p);
+    if (base.startsWith('LICENSE') || base.startsWith('README') || base.startsWith('CLAUDE') && path.dirname(p) === '.') return false;
+    return true;
+  });
+  if (untracked.length && (sev('untracked-strict') !== 'off' || cliStrict)) {
+    if (level === 'files') {
+      add('untracked-strict', untracked);
+    } else {
+      // 非 files 粒度：即使规则为 error 也只提示（该粒度本就不要求逐文件登记）
+      warns.push({ rule: 'untracked-strict', problems: [`粒度 ${level}：${untracked.length} 个文件未登记（当前粒度不要求逐文件登记，如需门禁请在 files 粒度启用）`] });
+    }
+  }
+}
+
+// 3) relatedness（links 扫描；triage 豁免；出边+反向）
+{
+  const problems = [];
+  if (sev('relatedness') !== 'off') {
+    const links = findCrossModuleLinks([...real].filter((p) => p.includes('/')), target);
+    const triage = new Set();
+    const triageFile = path.join(mapDir, 'memo', 'link-triage.md');
+    const tt = P.readText(triageFile);
+    if (tt) P.extractTriage(tt).forEach((k) => triage.add(k));
+    const mentions = (mod, name) => {
+      const docText = P.readText(path.join(mapDir, 'root', `${mod}.md`));
+      return docText ? P.extractRelatedModules(docText, dirs).has(name) : false;
+    };
+    for (const l of links) {
+      const key = `${l.from} → ${l.to}`;
+      if (triage.has(key)) continue;
+      if (!mentions(l.from, l.to)) problems.push({ a: l.from, b: l.to, side: 'out' });
+      if (!mentions(l.to, l.from)) problems.push({ a: l.from, b: l.to, side: 'rev' });
+    }
+  }
+  add('relatedness', problems);
+}
+
+// 4) changelog（git tag 基线）
+{
+  const problems = [];
+  if (sev('changelog') !== 'off') {
+    const chg = path.join(target, 'CHANGELOG.md');
+    if (!fs.existsSync(chg)) problems.push('缺少 CHANGELOG.md');
+    else {
+      const text = P.readText(chg);
+      if (!/^## \[Unreleased\]/m.test(text)) problems.push('CHANGELOG.md 缺 [Unreleased] 区块');
+      if (fs.existsSync(path.join(target, '.git'))) {
+        const tag = runGit(['describe', '--tags', '--abbrev=0']).trim();
+        if (tag) {
+          const changed = runGit(['log', '--oneline', `${tag}..HEAD`, '--', ...(roots ? [...roots] : ['.'])]).split('\n').filter(Boolean).length;
+          if (changed > 0) {
+            const hasReal = /-(?!\s*无\s*$)(?!\s*-?\s*none\s*$)/m.test(P.extractUnreleased(text) || '');
+            if (!hasReal) problems.push('自上次发布有功能提交，但 CHANGELOG [Unreleased] 无实质条目（用户可见变更请记入）');
+          }
+        }
+      }
+    }
+  }
+  add('changelog', problems);
+}
+
+// 5) semantics（职责/负责/影响 待填）
+{
+  const problems = [];
+  if (sev('semantics') !== 'off') {
+    for (const d of dirs) {
+      const text = P.readText(path.join(mapDir, 'root', `${d}.md`));
+      if (!text) continue;
+      const fields = P.extractModuleFields(text);
+      for (const [label, v] of [['职责', fields.duty], ['负责', fields.owner], ['影响', fields.impact]]) {
+        if (v === '（待填）') problems.push(`${d}.${label}=（待填）`);
+      }
+    }
+  }
+  add('semantics', problems);
+}
+
+// 6) size（阈值可配）
+{
+  const problems = [];
+  if (sev('size') !== 'off') {
+    const walk = (d) => {
+      let entries; try { entries = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
+      for (const ent of entries) {
+        if (ent.isDirectory()) { walk(path.join(d, ent.name)); continue; }
+        if (!ent.name.endsWith('.md')) continue;
+        const file = path.join(d, ent.name);
+        const text = P.readText(file);
+        if (!text) continue;
+        const lines = text.split('\n').length;
+        if (lines > HINT_LINE) problems.push(`${path.relative(target, file).replace(/\\/g, '/')} 已 ${lines} 行（>${HINT_LINE}），建议按子域拆分到 memo/`);
+      }
+    };
+    walk(mapDir);
+    const idx = P.readText(path.join(mapDir, 'index.md'));
+    if (idx) {
+      const moduleLines = P.extractIndexNav(idx).size;
+      if (moduleLines > HINT_INDEX_MODULES) problems.push(`index.md 模块一览已 ${moduleLines} 项（>${HINT_INDEX_MODULES}），建议按域聚合`);
+    }
+    const treeDir = path.join(mapDir, 'tree');
+    if (fs.existsSync(treeDir)) {
+      for (const f of fs.readdirSync(treeDir)) {
+        if (!f.endsWith('.md')) continue;
+        const text = P.readText(path.join(treeDir, f)) || '';
+        const noted = text.split('\n').filter((l) => /^- `[^`]+` —/.test(l) && !/^- `[^`]+\/` —/.test(l)).length;
+        if (noted > HINT_TREE_NOTED) problems.push(`${f} 关键文件已 ${noted} 个（>${HINT_TREE_NOTED}），建议只留指针 + memo 下钻`);
+      }
+    }
+  }
+  add('size', problems);
+}
+
+// 7) root-consistency（派生表 vs 模块节单一事实源）
+{
+  const problems = [];
+  if (sev('root-consistency') !== 'off') {
+    const content = P.readText(path.join(mapDir, 'root.md'));
+    if (content) {
+      const parsed = P.parseRootTable(content);
+      if (parsed) {
+        for (const d of dirs) {
+          const text = P.readText(path.join(mapDir, 'root', `${d}.md`));
+          const secRel = text ? P.extractRelatedModules(text, dirs) : new Set();
+          const row = parsed.rows.get(d);
+          if (!row) { problems.push(`root.md 表缺模块行 \`${d}\`（运行 sync 刷新）`); continue; }
+          const rowRel = new Set([...(row.related.match(/`([^`]+)`/g) || [])].map((x) => x.slice(1, -1)).filter((x) => dirs.includes(x) && x !== d));
+          for (const x of secRel) if (!rowRel.has(x)) problems.push(`root.md 表缺模块节声明的关联 ${d} → ${x}（运行 sync 刷新）`);
+          for (const x of rowRel) if (!secRel.has(x)) problems.push(`root.md 表多出模块节未声明的关联 ${d} → ${x}（运行 sync 刷新）`);
+          if (text) {
+            const f = P.extractModuleFields(text);
+            if (row.duty !== f.duty) problems.push(`root.md 表职责与 root/${d}.md 不一致（运行 sync 刷新）`);
+            if (row.owner !== f.owner) problems.push(`root.md 表负责与 root/${d}.md 不一致（运行 sync 刷新）`);
+          }
+        }
+      }
+    }
+  }
+  add('root-consistency', problems);
+}
+
+// 8) index-consistency
+{
+  const problems = [];
+  if (sev('index-consistency') !== 'off') {
+    const idx = P.readText(path.join(mapDir, 'index.md'));
+    if (idx) {
+      const listed = P.extractIndexNav(idx);
+      const missing = dirs.filter((d) => !listed.has(d));
+      const extra = [...listed].filter((l) => !dirs.includes(l));
+      if (missing.length) problems.push(`index.md 缺模块：${missing.join(',')}（用 sync --reindex 刷新）`);
+      if (extra.length) problems.push(`index.md 含已移除模块：${extra.join(',')}（用 sync --reindex 刷新）`);
+    }
+  }
+  add('index-consistency', problems);
+}
+
+// 9) index-format（llms.txt 式）
+{
+  const problems = [];
+  if (sev('index-format') !== 'off') {
+    const idx = P.readText(path.join(mapDir, 'index.md'));
+    if (idx) {
+      const lines = idx.split('\n').filter((l) => l.trim());
+      if (!lines.length || !lines[0].startsWith('# ')) problems.push('index.md 缺少 H1 标题（llms.txt 式：`# 项目名`）');
+      else if (!lines.slice(1, 4).some((l) => l.startsWith('>'))) problems.push('index.md 缺少一句话摘要 blockquote（`> ...`）');
+    }
+  }
+  add('index-format', problems);
+}
+
+// 10) doc-hygiene（语义陈旧疤痕；豁免标记）
+{
+  const problems = [];
+  if (sev('doc-hygiene') !== 'off') {
+    const walk = (d) => {
+      let entries; try { entries = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
+      for (const ent of entries) {
+        if (ent.name === 'tree') continue;
+        if (ent.isDirectory()) { walk(path.join(d, ent.name)); continue; }
+        if (!ent.name.endsWith('.md')) continue;
+        const file = path.join(d, ent.name);
+        const text = P.readText(file);
+        if (!text || P.hygieneIgnored(text)) continue;
+        const hits = text.split('\n').filter((l) => P.HYGIENE_SCAR.test(l));
+        if (hits.length) problems.push(`${path.relative(target, file).replace(/\\/g, '/')} 有 ${hits.length} 处文档疤痕（${hits[0].trim().slice(0, 40)}…）——建议全文档 reconcile 重读`);
+      }
+    };
+    walk(mapDir);
+  }
+  add('doc-hygiene', problems);
+}
+
+// ---- 输出 ----
+const fmtProblems = (probs) => probs.map((p) => {
+  if (typeof p === 'object') {
+    return p.side === 'rev'
+      ? `代码引用 ${p.a} → ${p.b}：root/${p.b}.md「相关模块」未标记反向影响（改 ${p.b} 需回归 ${p.a}）`
+      : `代码引用 ${p.a} → ${p.b}，但 root/${p.a}.md「相关模块」无标记（防开发漂移）`;
+  }
+  return p;
+});
+
+if (jsonMode) {
+  console.log(JSON.stringify({
+    ok: errors.length === 0,
+    configVersion: config.configVersion,
+    level,
+    dirs,
+    errors: errors.map((e) => ({ rule: e.rule, problems: fmtProblems(e.problems) })),
+    warns: warns.map((w) => ({ rule: w.rule, problems: fmtProblems(w.problems) })),
+  }, null, 2));
+  process.exit(errors.length ? 1 : 0);
+}
+
+const LABELS = {
+  'dead-links': '⛔ 地图引用了 %n 个已不存在的文件:',
+  'untracked-strict': '⛔ strict 模式（粒度 files）：%n 个真实文件未登记在地图:',
+  'relatedness': '⛔ strictLinks：%n 条跨模块关联缺「相关模块」标记（确认后填入 root/*.md，或登记 docs/map/memo/link-triage.md 豁免）:',
+  'changelog': '⛔ changelog（required）：',
+  'semantics': '⛔ strictSemantics：%n 个模块语义字段仍为（待填）:',
+};
+const WARN_PREFIX = { size: '📏', relatedness: '🔗', 'root-consistency': '📚', 'index-consistency': '📚', semantics: '📚', changelog: '📚', 'index-format': '📐', 'doc-hygiene': '🧹', 'untracked-strict': 'ℹ️' };
+
+let blocked = false;
+for (const e of errors) {
+  const label = LABELS[e.rule] || `⛔ ${e.rule}：`;
+  if (e.rule === 'changelog') console.log(`${label}${fmtProblems(e.problems).join('；')}`);
+  else if (e.rule === 'relatedness') {
+    const pairCount = new Set(e.problems.map((p) => `${p.a} → ${p.b}`)).size;
+    console.log(label.replace('%n', pairCount));
+    const seen = new Set();
+    fmtProblems(e.problems).forEach((p) => { const k = p.slice(0, 24); if (!seen.has(k)) { seen.add(k); console.log(`   - ${p}`); } });
+  } else {
+    console.log(label.replace('%n', e.problems.length));
+    e.problems.slice(0, 20).forEach((p) => console.log(`   - ${p}`));
+    if (e.problems.length > 20) console.log(`   …等 ${e.problems.length - 20} 个`);
+  }
+  blocked = true;
+}
+const warnList = warns.flatMap((w) => fmtProblems(w.problems).map((p) => `${WARN_PREFIX[w.rule] || '📋'} ${p}`));
+if (warnList.length) {
+  console.log(`\n—— 审查提示（非阻塞，${warnList.length} 条）——`);
+  warnList.forEach((h) => console.log(`  ${h}`));
+}
+if (!blocked) console.log('✅ 地图与代码一致，无漂移。');
+if (!blocked && warnList.length) console.log('（提示不影响提交；视需要处理）');
+process.exit(blocked ? 1 : 0);

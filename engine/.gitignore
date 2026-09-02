@@ -1,0 +1,9 @@
+# 引擎回归 smoke 的临时基准（运行于 cwd）
+.gov-bench/
+# Node / 编辑器
+node_modules/
+*.tsbuildinfo
+.DS_Store
+
+# ---- project-map-governance（瞬态数据，不入库）----
+.internal/

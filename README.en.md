@@ -68,10 +68,10 @@ Legacy fields (`strict`/`strictLinks`/`changelog`/`strictSemantics`) are auto-mi
 ## MCP (for other agents)
 
 ```bash
-claude mcp add project-map-governance -- node <skill-dir>/scripts/mcp-server.mjs
+claude mcp add project-map-governance -- node <repo>/engine/scripts/mcp-server.mjs
 ```
 
-Where `<skill-dir>` is the skill directory holding the engine (see above). Exposes the same 6 capabilities to any MCP-capable agent.
+Where `<repo>` is this repo's clone path (engine lives under `engine/`). Exposes the same 6 capabilities to any MCP-capable agent.
 
 ## Compatibility
 

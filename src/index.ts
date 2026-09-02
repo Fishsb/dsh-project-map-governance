@@ -1,14 +1,19 @@
 /**
  * @dsh-external/project-map-governance — 项目治理工具包（toolkit）
- * 引擎 = scripts/*.mjs（skill 目录，pre-commit hook / 其他 agent 亦用同一套）
+ * 引擎 = engine/scripts/*.mjs（本仓 engine/ 子目录，ADR-0002；pre-commit hook / 其他 agent 亦用同一套）
  * 契约 = 本插件把 init/sync/check/adr/status/reconcile 注册为 DSH 原生工具
  * 规范：资源注册挂 ctx.effect（热重载/卸载自动清理）
  */
 import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import type { Context } from 'cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import z from 'schemastery'
+
+// 默认引擎目录：本仓 engine/scripts（import.meta.url 定位，clone 即用可移植）
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const DEFAULT_SCRIPTS_DIR = path.join(REPO_ROOT, 'engine', 'scripts')
 
 export const name = '@dsh-external/project-map-governance'
 export const inject = ['tools']
@@ -19,7 +24,7 @@ export interface Config {
 }
 
 export const Config = z.object({
-  scriptsDir: z.string().default('C:/Users/lk/.dsh/skills/project-map-governance/scripts'),
+  scriptsDir: z.string().default(DEFAULT_SCRIPTS_DIR),
   nodeBin: z.string().default('node'),
 })
 

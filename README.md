@@ -24,22 +24,28 @@
 
 ## 引擎与形态
 
-**引擎**（Node 标准库脚本，**零第三方依赖**，运行于 Harness 自带 Node 22+）**不在本仓库**，随 skill 目录独立维护（`C:\Users\lk\.dsh\skills\project-map-governance`）：
+**引擎**（Node 标准库脚本，**零第三方依赖**，运行于 Harness 自带 Node 22+）**在本仓库 `engine/` 子目录**（ADR-0002）：
 
 ```
-<skill-dir>/scripts/
-├── lib-parse.mjs   统一解析层（文档格式 / 配置 schema 单一源）
-├── lib-links.mjs   跨模块引用扫描器（相对/绝对导入）
-├── init / sync / check / adr / status / reconcile / devref
-└── mcp-server.mjs  MCP stdio 薄包装（供 Claude Code 等其他 agent）
+engine/
+├── SKILL.md               引擎完整文档与迁移说明
+├── governance.schema.json 治理配置 schema
+├── scripts/
+│   ├── lib-parse.mjs   统一解析层（文档格式 / 配置 schema 单一源）
+│   ├── lib-links.mjs   跨模块引用扫描器（相对/绝对导入）
+│   ├── init / sync / check / adr / status / reconcile / devref
+│   └── mcp-server.mjs  MCP stdio 薄包装（供 Claude Code 等其他 agent）
+└── test/smoke.mjs      引擎回归（84 用例）
 ```
 
 本插件是**引擎的一层薄契约**：把同套脚本包装成 DSH 原生工具（`check` 走 `--json` 结构化返回）。因此：
 
 - pre-commit hook、CLI、DSH 插件、MCP —— 四方共用同一引擎，行为一致
-- 本仓库只含**插件契约**：`src/` 注册 6 个 DSH 工具，`scripts/build.sh` 是仓库自身构建脚本（非引擎命令）
-- 引擎完整文档与迁移说明见 skill 目录 `SKILL.md`
+- `src/` 注册 6 个 DSH 工具（契约层）；`engine/scripts/*.mjs` 是引擎命令；`scripts/build.sh` 是仓库自身构建脚本（非引擎命令）
+- 引擎自定位基于 `import.meta.url`（向上两级解析），本仓 `engine/` 下即插即用；也可部署到其他目录（如 skill 运行副本）
 - 项目级产物（`docs/map/**`）是**项目内文档**，不入本仓库
+
+> **引擎部署副本**：`C:\Users\lk\.dsh\skills\project-map-governance` 是引擎的运行副本（从本仓 `engine/` 同步，供本机 skill 体系加载）。
 
 ## 安装与注入
 
@@ -89,10 +95,10 @@ v2 及更早的 legacy 字段（`strict`/`strictLinks`/`changelog`/`strictSemant
 ## 为其他 agent 提供（MCP）
 
 ```bash
-claude mcp add project-map-governance -- node <skill-dir>/scripts/mcp-server.mjs
+claude mcp add project-map-governance -- node <repo>/engine/scripts/mcp-server.mjs
 ```
 
-`<skill-dir>` 即上文引擎所在 skill 目录。以 MCP 工具形式向任意支持 MCP 的 agent 暴露同 6 个能力。
+`<repo>` 即本仓库克隆路径（引擎在 `engine/` 子目录）。以 MCP 工具形式向任意支持 MCP 的 agent 暴露同 6 个能力。
 
 ## 兼容性
 
