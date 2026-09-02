@@ -1,0 +1,22 @@
+{
+  "configVersion": 3,
+  "generatedBy": "project-map-governance/init.mjs v3",
+  "level": "files",
+  "autoLevel": {
+    "files": 500,
+    "dirs": 2000
+  },
+  "rules": {
+    "dead-links": "error",
+    "untracked-strict": "off",
+    "relatedness": "warn",
+    "changelog": "error",
+    "semantics": "error",
+    "size": "warn",
+    "root-consistency": "warn",
+    "index-consistency": "warn",
+    "index-format": "warn",
+    "doc-hygiene": "warn"
+  },
+  "links": true
+}
