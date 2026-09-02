@@ -18,6 +18,26 @@ export const TABLE_END = '<!-- MODULE_TABLE_END -->';
 export const CONFIG_VERSION = 3;
 export const RULE_IDS = ['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts'];
 export const SEVERITIES = ['off', 'warn', 'error'];
+// 规则描述单一源（schema 生成/文档引用；加规则在此补一行 + defaultRules + check 规则块 + smoke）
+export const RULE_DESC = {
+  'dead-links': '地图引用不存在文件（核心，恒 error）',
+  'untracked-strict': 'files 粒度下未登记新文件（error 仅在 files 粒度=门禁；dirs/modules 粒度下即使 error 也降为提示）',
+  'relatedness': '跨模块关联缺「相关模块」标记（出边+反向；triage 豁免）',
+  'changelog': 'CHANGELOG 门禁（自上次 tag 有功能提交但 Unreleased 无实质条目）',
+  'semantics': 'root/*.md 职责/负责/影响 待填 + index 导航概况待填（warn）',
+  'size': '规模审查（阈值 hints.*：主文档>200 行/模块>15/关键文件>100）',
+  'root-consistency': 'root.md 派生表 vs 模块节一致性',
+  'index-consistency': 'index.md 导航 vs 真实模块',
+  'index-format': 'llms.txt 式 H1+摘要 + 导航概况规范（≤40 字高密度/失真）',
+  'doc-hygiene': '语义陈旧疤痕扫描（corrected/reversed/TODO/⚠/过时…；豁免标记豁免）',
+  'user-facts': '变更触及 active 用户确定事实（facts.md 约束范围）→ 按 severity；默认 error=门禁。文档完整性缺失恒为 warn 提示',
+};
+// 校验规则注册完整性：check 实际执行的规则 id 集 = RULE_IDS（防漏注册静默失效）
+export function assertRuleRegistry(executedIds) {
+  const missing = RULE_IDS.filter((id) => !executedIds.has(id));
+  const extra = [...executedIds].filter((id) => !RULE_IDS.includes(id));
+  return { ok: missing.length === 0 && extra.length === 0, missing, extra };
+}
 
 // ---- 治理边界（单一源：check/sync/init 共用，勿在各脚本重复定义）----
 // 取三脚本语义并集：跨平台点目录/构建产物/docs 治理层/瞬态数据一律不入图

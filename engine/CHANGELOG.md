@@ -12,6 +12,7 @@
 
 ### Fixed
 
+- **维护成本降本（v3.3）**：规则注册单点化（RULE_DESC 描述单一源 + assertRuleRegistry 启动断言 + gen-schema-check.mjs 守护/--fix 重写 schema）；sync-copy.sh 一键同步 skill 副本；engine/README 收敛为入口指向 SKILL.md（消除重复维护面）。
 - **user-facts 规则（v3.2）**：`docs/map/facts.md` 用户确定事实——init 生成模板 + AGENTS 规则 0 铁律；check 变更触及 active 事实「约束范围」→ error（git staged/工作区 diff 匹配路径/模块/关键词）；facts 文档完整性（状态/日期/约束范围/superseded 冲突记录）→ warn；11 规则注册（RULE_IDS/defaultRules/schema）。约束范围尾斜杠 bug 已修（`src/` 匹配 `src/b.js`）。
 - **导航概况规范（v3.1）**：index.md 导航概况标准化——≤40 字高密度描述含职责要点（见导航即理解，区别于记忆极简路由）；semantics 报概况待填（warn 级不随 strictSemantics 升级）、index-format 报超长/失真（子串关联判定）。
 - **root.md 派生表 3 列化**：去"负责"列（模块|职责|相关模块；运行时/维护信息分离，负责留 root/<模块>.md）；sync 汇总、check root-consistency、init 模板、smoke 同步。

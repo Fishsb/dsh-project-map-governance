@@ -409,6 +409,19 @@ const HINT_TREE_NOTED = cfgHints.maxTreeNoted ?? 100;
   add('user-facts', problems);
 }
 
+// ---- 规则注册完整性断言（防漏注册静默失效：新增规则须在 check 加块 + 此处登记 + lib-parse RULE_IDS）----
+{
+  // 实际执行了规则块的 id（每块 add() 的规则名）
+  const executed = new Set(['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts']);
+  const reg = P.assertRuleRegistry(executed);
+  if (!reg.ok) {
+    const msg = `规则注册不一致: 缺 ${reg.missing.join(',')} / 多余 ${reg.extra.join(',')}（检查 check 规则块与 lib-parse RULE_IDS）`;
+    if (jsonMode) { console.log(JSON.stringify({ ok: false, errors: [{ rule: 'registry', problems: [msg] }], warns: [] })); }
+    else console.error(`⛔ ${msg}`);
+    process.exit(1);
+  }
+}
+
 // ---- 输出 ----
 const fmtProblems = (probs) => probs.map((p) => {
   if (typeof p === 'object') {

@@ -37,6 +37,7 @@
 - **导航概况规范（v3.1，吸收 managing-memory 概况思想但适配治理场景）**：index.md 导航概况 = ≤40 字高密度描述（含模块职责要点/关键实体，让模型见导航即理解；区别于记忆插件的 ≤30 字极简路由标签——治理文档导航即信息，漏要点=漂移风险）；check semantics 报概况待填（始终 warn 不随 strictSemantics 升级）、index-format 报超长/与 root 职责失真（子串关联判定）。
 - **root.md 派生表去"负责"列**（v11 运行时/维护信息分离）：表 = 模块|职责|相关模块 三要素；"负责"为维护信息留在 root/<模块>.md 不进派生表（sync 汇总/check 一致性同步改）。
 - **用户确定事实机制（user-facts，v3.2）**：新增 `docs/map/facts.md` 记录用户拍板事实（active=已确认约束禁破坏）；AGENTS 规则 0「用户事实铁律」（禁破坏/冲突升级/方向变动同步评估）；check 新增 user-facts 规则（变更触及 active 事实约束范围→error 门禁；文档完整性缺失→warn）；本仓登记 F-001~F-005 真实用户事实；init 模板/索引/引擎 11 规则注册同步。
+- **维护成本降本（v3.3）**：规则注册单点化——lib-parse 新增 `RULE_DESC`（规则描述单一源）+ `assertRuleRegistry`（check 启动断言实际执行规则 = RULE_IDS，防漏注册静默失效）；新增 `engine/scripts/gen-schema-check.mjs`（schema rules 段与 RULE_IDS 一致性守护，`--fix` 从 RULE_DESC 重写）；新增 `engine/scripts/sync-copy.sh`（一键同步引擎 → skill 副本 + 一致性验证）；engine/README.md 收敛为入口文档（权威指向 SKILL.md，消除双文档重复维护）。
 
 ## [0.1.0] - 2026-09-02
 

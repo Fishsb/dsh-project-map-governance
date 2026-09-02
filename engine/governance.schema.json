@@ -5,44 +5,170 @@
   "description": "docs/map/governance.json 的声明式规格。severity: off|warn|error（error=门禁 exit 1）。v2 及更早的 legacy 字段（strict/strictLinks/changelog/strictSemantics）在首次运行时自动迁移为 rules。",
   "type": "object",
   "additionalProperties": true,
-  "required": ["configVersion"],
+  "required": [
+    "configVersion"
+  ],
   "properties": {
-    "configVersion": { "const": 3, "description": "版本标记；<3 由 lib-parse.migrateConfig 自动升级" },
-    "generatedBy": { "type": "string" },
-    "level": { "enum": ["files", "dirs", "modules"], "description": "tree 粒度（init 自动选或 --level）" },
-    "roots": { "type": "array", "items": { "type": "string" }, "description": "白名单模块（--root 时写入）；缺省=全部顶层目录" },
-    "ignore": { "type": "array", "items": { "type": "string" }, "description": "额外忽略的顶层目录名" },
-    "links": { "type": "boolean", "description": "true=check 自扫描跨模块引用（闭环随 hook 存在）" },
+    "configVersion": {
+      "const": 3,
+      "description": "版本标记；<3 由 lib-parse.migrateConfig 自动升级"
+    },
+    "generatedBy": {
+      "type": "string"
+    },
+    "level": {
+      "enum": [
+        "files",
+        "dirs",
+        "modules"
+      ],
+      "description": "tree 粒度（init 自动选或 --level）"
+    },
+    "roots": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "白名单模块（--root 时写入）；缺省=全部顶层目录"
+    },
+    "ignore": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "额外忽略的顶层目录名"
+    },
+    "links": {
+      "type": "boolean",
+      "description": "true=check 自扫描跨模块引用（闭环随 hook 存在）"
+    },
     "autoLevel": {
       "type": "object",
       "description": "自动降档阈值（文件数）",
-      "properties": { "files": { "type": "number" }, "dirs": { "type": "number" } }
+      "properties": {
+        "files": {
+          "type": "number"
+        },
+        "dirs": {
+          "type": "number"
+        }
+      }
     },
     "rules": {
       "type": "object",
       "description": "规则表：每条规则 severity=off|warn|error",
-      "additionalProperties": { "enum": ["off", "warn", "error"] },
+      "additionalProperties": {
+        "enum": [
+          "off",
+          "warn",
+          "error"
+        ]
+      },
       "properties": {
-        "dead-links": { "enum": ["error"], "description": "地图引用不存在文件（核心，恒 error）" },
-        "untracked-strict": { "enum": ["off", "warn", "error"], "description": "files 粒度下未登记新文件（error 仅在 files 粒度=门禁；dirs/modules 粒度下即使 error 也降为提示，因该粒度本就不要求逐文件登记）" },
-        "relatedness": { "enum": ["off", "warn", "error"], "description": "跨模块关联缺「相关模块」标记（出边+反向；triage 豁免）" },
-        "changelog": { "enum": ["off", "warn", "error"], "description": "CHANGELOG 门禁" },
-        "semantics": { "enum": ["off", "warn", "error"], "description": "root/*.md 职责/负责/影响 待填" },
-        "size": { "enum": ["warn", "error", "off"], "description": "规模审查（阈值 hints.*）" },
-        "root-consistency": { "enum": ["off", "warn", "error"], "description": "root.md 派生表 vs 模块节" },
-        "index-consistency": { "enum": ["off", "warn", "error"], "description": "index.md 导航 vs 真实模块" },
-        "index-format": { "enum": ["off", "warn", "error"], "description": "llms.txt 式 H1+摘要" },
-        "doc-hygiene": { "enum": ["off", "warn", "error"], "description": "语义陈旧疤痕扫描" },
-        "user-facts": { "enum": ["off", "warn", "error"], "description": "变更触及 active 用户确定事实（facts.md 约束范围）→ 按 severity；默认 error=门禁。文档完整性缺失恒为 warn 提示" }
+        "dead-links": {
+          "enum": [
+            "error"
+          ],
+          "description": "地图引用不存在文件（核心，恒 error）"
+        },
+        "untracked-strict": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "files 粒度下未登记新文件（error 仅在 files 粒度=门禁；dirs/modules 粒度下即使 error 也降为提示）"
+        },
+        "relatedness": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "跨模块关联缺「相关模块」标记（出边+反向；triage 豁免）"
+        },
+        "changelog": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "CHANGELOG 门禁（自上次 tag 有功能提交但 Unreleased 无实质条目）"
+        },
+        "semantics": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "root/*.md 职责/负责/影响 待填 + index 导航概况待填（warn）"
+        },
+        "size": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "规模审查（阈值 hints.*：主文档>200 行/模块>15/关键文件>100）"
+        },
+        "root-consistency": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "root.md 派生表 vs 模块节一致性"
+        },
+        "index-consistency": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "index.md 导航 vs 真实模块"
+        },
+        "index-format": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "llms.txt 式 H1+摘要 + 导航概况规范（≤40 字高密度/失真）"
+        },
+        "doc-hygiene": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "语义陈旧疤痕扫描（corrected/reversed/TODO/⚠/过时…；豁免标记豁免）"
+        },
+        "user-facts": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "变更触及 active 用户确定事实（facts.md 约束范围）→ 按 severity；默认 error=门禁。文档完整性缺失恒为 warn 提示"
+        }
       }
     },
     "hints": {
       "type": "object",
       "description": "规模审查阈值",
       "properties": {
-        "maxDocLines": { "type": "number", "default": 200 },
-        "maxIndexModules": { "type": "number", "default": 15 },
-        "maxTreeNoted": { "type": "number", "default": 100 }
+        "maxDocLines": {
+          "type": "number",
+          "default": 200
+        },
+        "maxIndexModules": {
+          "type": "number",
+          "default": 15
+        },
+        "maxTreeNoted": {
+          "type": "number",
+          "default": 100
+        }
       }
     }
   }
