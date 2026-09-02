@@ -16,7 +16,7 @@ import path from 'node:path';
 export const TABLE_BEGIN = '<!-- MODULE_TABLE_BEGIN -->';
 export const TABLE_END = '<!-- MODULE_TABLE_END -->';
 export const CONFIG_VERSION = 3;
-export const RULE_IDS = ['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene'];
+export const RULE_IDS = ['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts'];
 export const SEVERITIES = ['off', 'warn', 'error'];
 
 // ---- 治理边界（单一源：check/sync/init 共用，勿在各脚本重复定义）----
@@ -61,6 +61,7 @@ export function defaultRules() {
     'index-consistency': 'warn',
     'index-format': 'warn',
     'doc-hygiene': 'warn',
+    'user-facts': 'error',   // 变更触及 active 用户确定事实 → 门禁（默认 error）；文档完整性缺失为 warn 提示
   };
 }
 
@@ -238,3 +239,43 @@ export function hygieneIgnored(text) {
 }
 
 export const HYGIENE_SCAR = /(corrected|reversed|earlier draft|TODO|⚠|过时|已废弃|临时方案|此句已不适用)/i;
+
+// ---- 用户确定事实（facts.md）----
+// 格式：每条 `### [F-xxx] 标题` + 字段行 `- **字段**：值`
+//   status: active|superseded；scope: 约束范围（反引号路径/模块/关键词，逗号分隔）
+//   statement: 事实陈述；conflict: 冲突处理（superseded 必填）
+export const FACT_STATUSES = ['active', 'superseded'];
+const FACT_FIELDS = { status: '状态', scope: '约束范围', date: '确认日期', statement: '事实', conflict: '冲突处理' };
+
+export function parseFacts(text) {
+  const facts = [];
+  const lines = (text || '').split('\n');
+  let cur = null;
+  let inComment = false;
+  for (const line of lines) {
+    if (line.includes('<!--')) inComment = true;
+    if (inComment) {
+      if (line.includes('-->')) inComment = false;
+      continue;
+    }
+    const head = line.match(/^### \[(F-\d+)\]\s*(.+)$/);
+    if (head) {
+      if (cur) facts.push(cur);
+      cur = { id: head[1], title: head[2].trim(), status: '', scope: '', date: '', statement: '', conflict: '' };
+      continue;
+    }
+    if (!cur) continue;
+    for (const [key, label] of Object.entries(FACT_FIELDS)) {
+      // 匹配 `- **字段**：值` 或 `- 字段：值`
+      const m = line.match(new RegExp(`^- (?:\\*\\*)?${label}(?:\\*\\*)?：?(.*)$`));
+      if (m) { cur[key] = m[1].trim(); break; }
+    }
+  }
+  if (cur) facts.push(cur);
+  return facts;
+}
+
+export function factScopeList(fact) {
+  // 约束范围：反引号路径/模块/关键词 → 数组（去空）
+  return (fact.scope || '').split(',').map((s) => s.replace(/`/g, '').trim()).filter(Boolean);
+}

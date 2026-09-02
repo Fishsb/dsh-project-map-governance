@@ -32,7 +32,8 @@
         "root-consistency": { "enum": ["off", "warn", "error"], "description": "root.md 派生表 vs 模块节" },
         "index-consistency": { "enum": ["off", "warn", "error"], "description": "index.md 导航 vs 真实模块" },
         "index-format": { "enum": ["off", "warn", "error"], "description": "llms.txt 式 H1+摘要" },
-        "doc-hygiene": { "enum": ["off", "warn", "error"], "description": "语义陈旧疤痕扫描" }
+        "doc-hygiene": { "enum": ["off", "warn", "error"], "description": "语义陈旧疤痕扫描" },
+        "user-facts": { "enum": ["off", "warn", "error"], "description": "变更触及 active 用户确定事实（facts.md 约束范围）→ 按 severity；默认 error=门禁。文档完整性缺失恒为 warn 提示" }
       }
     },
     "hints": {

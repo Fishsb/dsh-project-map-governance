@@ -38,8 +38,8 @@ skill 生成的不是静态文档，而是**能自检的机制**（扫描→生�
 
 扫描指定项目目录的真实结构，生成：
 
-- `AGENTS.md`（收缩版：一句话描述 + 地图指针 + 3 条规则）+ `CLAUDE.md`（同内容，Claude Code 兼容）
-- `docs/map/index.md`（llms.txt 式总导航）`+ root.md`（模块总览/关联总图）+ `root/<模块>.md`（职责 + **相关模块**）
+- `AGENTS.md`（收缩版：一句话描述 + 地图指针 + 规则含「用户事实铁律」规则 0）+ `CLAUDE.md`（同内容，Claude Code 兼容）
+- `docs/map/index.md`（llms.txt 式总导航）`+ root.md`（模块总览/关联总图）+ `root/<模块>.md`（职责 + **相关模块**）+ `facts.md`（用户确定事实模板，active=已确认约束禁破坏）
 - `docs/map/tree/<模块>.md`（按粒度）+ `docs/map/governance.json`（治理配置）
 - `CHANGELOG.md`（若已有则保留，否则建 Keep-a-Changelog 模板）
 - git 仓库时安装 `.git/hooks/pre-commit` → 自动跑 check（strict 与否由配置决定）
@@ -88,6 +88,7 @@ sync <项目路径> [--links] [--list <模块>] [--reindex]
   - 📚 语义/一致性：root.md 派生表与 root/<模块>.md 不一致、index 导航与实际模块不符、语义字段待补全
   - 🧹 文档卫生：docs/map 内语义陈旧疤痕（corrected/reversed/TODO/⚠/过时 等）→ 建议 reconcile 重读（`<!-- hygiene: ignore -->` 可豁免）
   - 📐 index.md 缺 H1/摘要 → 提示补 llms.txt 式头；导航概况超 40 字或与 root 职责失真 → 提示规范概况（概况待填归 semantics）
+- **用户事实门禁（user-facts，v3.2）**：`docs/map/facts.md` 记录用户已拍板的确定事实（active=已确认约束）。check 读 git 变更文件，命中 active 事实的「约束范围」→ 按 rules.user-facts severity（默认 error=拦截 commit），提示"先询问用户并更新 facts.md"；facts 文档完整性缺失（状态非法/缺日期/缺约束范围/superseded 缺冲突记录）→ warn 提示。AGENTS.md 规则 0 = 用户事实铁律（禁破坏、冲突升级、方向变动同步评估）。
 - **噪音豁免**：确认为噪音的候选边登记 `docs/map/memo/link-triage.md`（`- A → B — 原因`）
 - 退出码：`0` 一致（可带提示）/ `1` 漂移 / `2` 参数错误
 
@@ -135,8 +136,9 @@ manifest：`{ "dir": "docs/devref", "docs": [{ "name", "url", "note" }] }`；url
     "size": "warn",                // 规模审查（阈值见 hints）
     "root-consistency": "warn",    // root.md 派生表 vs 模块节一致性
     "index-consistency": "warn",   // index.md 导航 vs 真实模块
-    "index-format": "warn",        // llms.txt 式 H1+摘要 + 导航概况规范（≤30 字名词短语/待填/失真）
-    "doc-hygiene": "warn"          // 语义陈旧疤痕（corrected/reversed/TODO/⚠/过时…；豁免标记豁免）
+    "index-format": "warn",        // llms.txt 式 H1+摘要 + 导航概况规范（≤40 字高密度/失真）
+    "doc-hygiene": "warn",         // 语义陈旧疤痕（corrected/reversed/TODO/⚠/过时…；豁免标记豁免）
+    "user-facts": "error"          // 变更触及 active 用户确定事实（facts.md 约束范围）→ 门禁；文档完整性缺失=warn
   },
   "hints": { "maxDocLines": 200, "maxIndexModules": 15, "maxTreeNoted": 100 }
 }

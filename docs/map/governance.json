@@ -16,7 +16,8 @@
     "root-consistency": "warn",
     "index-consistency": "warn",
     "index-format": "warn",
-    "doc-hygiene": "warn"
+    "doc-hygiene": "warn",
+    "user-facts": "error"
   },
   "links": true
 }

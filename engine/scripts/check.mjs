@@ -369,6 +369,46 @@ const HINT_TREE_NOTED = cfgHints.maxTreeNoted ?? 100;
   add('doc-hygiene', problems);
 }
 
+// 11) user-facts（用户确定事实：active=已确认约束；变更触及→按 severity（默认 error 门禁）；文档完整性→warn 提示）
+{
+  const problems = [];
+  if (sev('user-facts') !== 'off') {
+    const factsFile = path.join(mapDir, 'facts.md');
+    const facts = fs.existsSync(factsFile) ? P.parseFacts(P.readText(factsFile)) : [];
+    for (const f of facts) {
+      // 完整性（warn 级提示，不随 error 门禁拦截）
+      if (!P.FACT_STATUSES.includes(f.status)) warns.push({ rule: 'user-facts', problems: [`facts ${f.id}「${f.title}」状态非法: ${f.status || '（空）'}（应为 active|superseded）`] });
+      else if (f.status === 'active') {
+        if (!f.date) warns.push({ rule: 'user-facts', problems: [`facts ${f.id} 状态 active 缺确认日期`] });
+        if (!f.scope) warns.push({ rule: 'user-facts', problems: [`facts ${f.id} 状态 active 缺约束范围（check 无法检测变更触及）`] });
+        if (!f.statement) warns.push({ rule: 'user-facts', problems: [`facts ${f.id} 状态 active 缺事实陈述`] });
+      } else if (f.status === 'superseded' && !f.conflict) {
+        warns.push({ rule: 'user-facts', problems: [`facts ${f.id} 状态 superseded 缺冲突处理记录（原由/新方向/用户决策）`] });
+      }
+    }
+    // 变更触及 active 事实的约束范围 → 按 rules.user-facts severity（默认 error 门禁）
+    const staged = runGit(['diff', '--cached', '--name-only']).split('\n').map((s) => s.trim()).filter(Boolean);
+    const changed = staged.length
+      ? staged
+      : runGit(['diff', '--name-only']).split('\n').map((s) => s.trim()).filter(Boolean); // 无 staged 时退回工作区 diff
+    if (changed.length) {
+      for (const f of facts) {
+        if (f.status !== 'active') continue;
+        for (const scope of P.factScopeList(f)) {
+          // scope 匹配：路径前缀（去尾斜杠）/ 模块名 / 关键词（归一化斜杠）
+          const normScope = scope.replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, '');
+          const hit = changed.some((c) => {
+            const nc = c.replace(/\\/g, '/');
+            return nc === normScope || nc.startsWith(normScope + '/') || (normScope.includes('/') === false && nc.split('/').includes(normScope));
+          });
+          if (hit) { problems.push(`变更触及用户确定事实 ${f.id}「${f.title}」（约束范围 ${scope}）——用户已确认，禁止破坏；如需变更请先询问用户并更新 facts.md`); break; }
+        }
+      }
+    }
+  }
+  add('user-facts', problems);
+}
+
 // ---- 输出 ----
 const fmtProblems = (probs) => probs.map((p) => {
   if (typeof p === 'object') {

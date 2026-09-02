@@ -178,9 +178,11 @@ function build(meta) {
     '',
     '## 开工前必读',
     `- **项目地图** → \`docs/map/index.md\`（LLM 友好导航：先读摘要，再按指针下钻，禁止全项目扫描）`,
+    '- **用户确定事实** → `docs/map/facts.md`（active 事实=已确认约束，禁止破坏）',
     '- 更新日志 → `CHANGELOG.md` 的 [Unreleased]',
     '',
     '## 规则',
+    '0. **用户事实铁律**：改代码前读 `docs/map/facts.md`；active 事实是用户已确认的约束——**禁止破坏**。开发与事实冲突 → 停下升级用户决策（不自行绕过）；用户方向变动 → 同步评估受影响事实、询问用户后更新（active→superseded + 冲突处理记录）。',
     '1. **改前影响分析**：先读目标模块 `docs/map/root/<模块>.md`，特别是「相关模块」节——跨模块关联（功能逻辑 ↔ 展示层等）是本项目漂移高发区。',
     `2. **改后同步**：新增/删除/移动文件 → \`node "${SKILL_POSIX}/scripts/sync.mjs" .\`；用户可感知改动 → 写 CHANGELOG。`,
     '3. **提交前**：pre-commit 自动 `check` 地图；漂移会拦截 commit（提示先 sync）。',
@@ -214,6 +216,7 @@ function build(meta) {
   if (level === 'files') indexLines.push(`- [文件级地图](tree/)（粒度：${levelLabel}）`);
   else indexLines.push(`- [文件索引](tree/)（粒度：${levelLabel}；全量清单运行时 \`sync --list\` 查看）`);
   indexLines.push('- [工程约定](conventions.md) — 按需创建（技术栈/命令/模式）');
+  indexLines.push('- [用户确定事实](facts.md) — active 事实=已确认约束，禁破坏；冲突/方向变动升级用户');
   indexLines.push('- [架构决策](decisions/README.md) — ADR 记录（新增：`node <skill>/scripts/adr.mjs . "<标题>"`）');
   indexLines.push('- [更新日志](../../CHANGELOG.md)');
   indexLines.push('', '## Optional', '');
@@ -236,6 +239,33 @@ function build(meta) {
     '',
   ];
   fs.writeFileSync(path.join(mapDir, 'root.md'), rootLines.join('\n'), 'utf8');
+
+  // facts.md：用户确定事实（active=已确认约束，禁破坏；冲突/方向变动升级用户）
+  const factsPath = path.join(mapDir, 'facts.md');
+  if (!fs.existsSync(factsPath)) {
+    fs.writeFileSync(factsPath, [
+      '# 用户确定事实（User-Confirmed Facts）',
+      '',
+      '> 记录用户在本项目开发过程中拍板确定的事实。**active 事实 = 已确认的开发约束——禁止破坏**；',
+      '> 开发与事实冲突 → 停下升级用户决策；用户方向变动 → 同步评估受影响事实、询问用户后更新。',
+      '> 状态：`active` ｜ `superseded`；superseded 必须保留冲突处理记录（用户决策历史，勿删）。',
+      '> 每条建议带「约束范围」（反引号路径/模块/关键词）供 check 检测变更是否触及。',
+      '',
+      '## 事实',
+      '',
+      '<!-- 模板：',
+      '### [F-001] 事实标题',
+      '- 状态：active',
+      '- 确认日期：YYYY-MM-DD',
+      '- 约束范围：`<路径或模块>`、`<关键词>`',
+      '- 事实：<用户确定的内容，禁止破坏>',
+      '- 冲突处理：（active 留空；superseded 填：原由 / 新方向 / 用户决策）',
+      '-->',
+      '',
+      '_（尚无用户确定事实——开发中用户明确拍板方向/约束时，在此登记为 F-001、F-002…）_',
+      '',
+    ].join('\n'), 'utf8');
+  }
 
   // root/<模块>.md：职责/影响 + 相关模块（关联层）
   for (const h of heads) {

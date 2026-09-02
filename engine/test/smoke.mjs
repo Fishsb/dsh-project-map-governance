@@ -398,5 +398,41 @@ check('reconcile 列疤痕目标', /note\.md/.test(r.out), r.out.slice(-400));
 r = run([path.join(SKILL, 'reconcile.mjs'), v3clean, '--done']);
 check('reconcile --done 落时间戳', fs.existsSync(path.join(v3clean, '.internal/reconcile-last.txt')), r.out.slice(-300));
 
+// ============ T22 user-facts 用户确定事实门禁 ============
+console.log('\n[T22] user-facts');
+const uf = path.join(BASE, 'uf');
+fs.mkdirSync(path.join(uf, 'src'), { recursive: true });
+fs.writeFileSync(path.join(uf, 'src', 'a.js'), 'export const a=1;\n');
+run([path.join(SKILL, 'init.mjs'), uf, '--level', 'files']);
+check('init 生成 facts.md', fs.existsSync(path.join(uf, 'docs/map/facts.md')));
+// 登记一条 active 事实约束 src/
+const ff = path.join(uf, 'docs/map/facts.md');
+fs.writeFileSync(ff, '# 用户确定事实\n\n## 事实\n\n### [F-001] src 采用 ESM\n- 状态：active\n- 确认日期：2026-09-02\n- 约束范围：`src/`\n- 事实：src 模块保持 ESM 架构\n- 冲突处理：\n');
+// 无 git 时 check 不报（无 diff）；初始化 git 模拟 staged 变更
+spawnSync('git', ['init', '-q'], { cwd: uf });
+spawnSync('git', ['config', 'user.email', 't@t'], { cwd: uf });
+spawnSync('git', ['config', 'user.name', 't'], { cwd: uf });
+spawnSync('git', ['add', '-A'], { cwd: uf });
+spawnSync('git', ['commit', '-q', '-m', 'init'], { cwd: uf });
+// 变更 src/ 文件并 staged → 应触发 user-facts error
+fs.writeFileSync(path.join(uf, 'src', 'b.js'), 'export const b=1;\n');
+spawnSync('git', ['add', '-A'], { cwd: uf });
+r = run([path.join(SKILL, 'check.mjs'), uf]);
+check('变更触及 active fact → 拦截', r.status === 1 && /user-facts|F-001/.test(r.out), r.out.slice(-500));
+// 提交清空 staged，隔离场景
+spawnSync('git', ['add', '-A'], { cwd: uf });
+spawnSync('git', ['commit', '-qm', 'touch fact'], { cwd: uf });
+// 变更无关文件（README，不在 scope src/）→ 不触发
+fs.writeFileSync(path.join(uf, 'README.md'), '# x\n');
+spawnSync('git', ['add', '-A'], { cwd: uf });
+r = run([path.join(SKILL, 'check.mjs'), uf, '--json']);
+const ufj = parseJson(r.out);
+check('变更无关文件不触发', ufj && !ufj.errors.some((e) => e.rule === 'user-facts'), r.out.slice(0, 300));
+// facts 完整性：superseded 缺冲突处理 → warn
+fs.writeFileSync(ff, '# 用户确定事实\n\n## 事实\n\n### [F-001] src 采用 ESM\n- 状态：superseded\n- 确认日期：2026-09-02\n- 约束范围：`src/`\n- 事实：已废弃\n- 冲突处理：\n');
+r = run([path.join(SKILL, 'check.mjs'), uf, '--json']);
+const ufj2 = parseJson(r.out);
+check('superseded 缺冲突处理 → warn', ufj2 && ufj2.warns.some((w) => w.rule === 'user-facts'), r.out.slice(0, 300));
+
 console.log(`\n==== 冒烟结果: ${pass} PASS / ${fail} FAIL ====`);
 process.exit(fail ? 1 : 0);
