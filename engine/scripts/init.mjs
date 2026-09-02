@@ -208,7 +208,7 @@ function build(meta) {
     '## 导航',
     '',
   ];
-  for (const h of heads) indexLines.push(`- \`${h}\` — 见 root/${safeName(h)}.md（职责待填）`);
+  for (const h of heads) indexLines.push(`- \`${h}\` — 见 root/${safeName(h)}.md（概况待填）`);
   indexLines.push('', '## 治理', '');
   indexLines.push(`- [模块总览（含关联总图）](root.md)`);
   if (level === 'files') indexLines.push(`- [文件级地图](tree/)（粒度：${levelLabel}）`);
@@ -230,8 +230,8 @@ function build(meta) {
     '> 本表由 sync 从 root/<模块>.md 自动汇总（【模块表】标记之间请勿手改）；候选可由 `sync --links` 探测。',
     '',
     '<!-- MODULE_TABLE_BEGIN -->',
-    '| 模块 | 职责 | 相关模块 | 负责 |',
-    '|---|---|---|---|',
+    '| 模块 | 职责 | 相关模块 |',
+    '|---|---|---|',
     '<!-- MODULE_TABLE_END -->',
     '',
   ];

@@ -256,12 +256,13 @@ for (const f of fs.readdirSync(treeDir)) {
   const e = P.TABLE_END;
   if (fs.existsSync(rootFile)) {
     const content = P.readText(rootFile);
-    const rows = ['| 模块 | 职责 | 相关模块 | 负责 |', '|---|---|---|---|'];
+    const rows = ['| 模块 | 职责 | 相关模块 |', '|---|---|---|'];
     for (const d of dirs) {
       const text = P.readText(path.join(mapDir, 'root', `${d}.md`)) || '';
       const fields = P.extractModuleFields(text);
       const rel = P.extractRelatedModules(text, dirs);
-      rows.push(`| \`${d}\` | ${fields.duty} | ${rel.size ? [...rel].map((n) => `\`${n}\``).join('、') : '（待填）'} | ${fields.owner} |`);
+      // v3.1：表 = 运行时三要素（模块|职责|相关模块）；"负责"为维护信息，留在 root/<模块>.md 不进派生表
+      rows.push(`| \`${d}\` | ${fields.duty} | ${rel.size ? [...rel].map((n) => `\`${n}\``).join('、') : '（待填）'} |`);
     }
     const table = rows.join('\n');
     if (content.includes(b) && content.includes(e)) {
@@ -287,7 +288,7 @@ for (const f of fs.readdirSync(treeDir)) {
           const nextHead = lines.findIndex((l, i) => i > navIdx && l.startsWith('## '));
           const before = lines.slice(0, navIdx + 2);
           const after = nextHead >= 0 ? lines.slice(nextHead) : [];
-          const navList = dirs.map((d) => `- \`${d}\` — 见 root/${d}.md（职责待填）`);
+          const navList = dirs.map((d) => `- \`${d}\` — 见 root/${d}.md（概况待填）`);
           const newTxt = before.join('\n') + '\n' + navList.join('\n') + '\n\n' + (after.length ? after.join('\n') : '');
           if (newTxt !== txt) { fs.writeFileSync(indexFile, newTxt, 'utf8'); changed++; console.log('  ↻ index.md 导航已与模块对齐（--reindex）'); }
         }

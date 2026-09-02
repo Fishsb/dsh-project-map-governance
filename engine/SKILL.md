@@ -17,6 +17,7 @@ skill 生成的不是静态文档，而是**能自检的机制**（扫描→生�
 |---|---|
 | **信息类分离** | 主文档按「一个文档一个主题」组织（项目摘要/模块地图/关键文件/约定/决策），模块只是模块地图内的二级分组——同 managing-memory 按画像/记忆/教训分类的做法 |
 | **披露层级** | L0 常读（AGENTS.md + index.md，≤~80 行）→ L1 按任务（root/tree/conventions）→ L2 按需（memo/）；细节永远在链接后面，按需取 |
+| **导航概况规范** | index.md 导航每行 `- \`模块\` — 见 root/x.md（概况）`：概况 = **≤40 字高密度描述**，含模块职责要点与关键实体（工具/命令/文件），让模型见导航即形成模块理解（区别于记忆插件的极简路由标签——治理文档导航即信息，漏要点=漂移风险）；check semantics 查概况待填、index-format 查超长/失真 |
 | **模块关联层** | 每模块文档有「相关模块」节；`sync --links` / check 自扫描（共用 `lib-links.mjs` 扫描器，含相对导入解析）探测跨模块引用；check 对"代码有引用但地图无标记"提示（出边+反向双向），可升级 strictLinks 门禁；噪音边可登记 `docs/map/memo/link-triage.md` 豁免（入库、随仓库走） |
 | **规模审查** | check 顺带当 linter：主文档 >200 行 / index 模块 >15 项 / 单模块关键文件 >100 个 → 非阻塞提示拆分；粒度 files→dirs→modules 自动降档 |
 | **生态兼容** | AGENTS.md + CLAUDE.md 双写（Claude Code 自动读）；index.md 为 llms.txt 式（H1 + 摘要 + 导航/治理 + `## Optional`），可机器解析 |
@@ -86,7 +87,7 @@ sync <项目路径> [--links] [--list <模块>] [--reindex]
   - 🔗 关联守恒（`links=true` 时**自扫描**，出边+反向双向）：代码跨模块引用但「相关模块」无标记 → 提示补关联
   - 📚 语义/一致性：root.md 派生表与 root/<模块>.md 不一致、index 导航与实际模块不符、语义字段待补全
   - 🧹 文档卫生：docs/map 内语义陈旧疤痕（corrected/reversed/TODO/⚠/过时 等）→ 建议 reconcile 重读（`<!-- hygiene: ignore -->` 可豁免）
-  - 📐 index.md 缺 H1/摘要 → 提示补 llms.txt 式头
+  - 📐 index.md 缺 H1/摘要 → 提示补 llms.txt 式头；导航概况超 40 字或与 root 职责失真 → 提示规范概况（概况待填归 semantics）
 - **噪音豁免**：确认为噪音的候选边登记 `docs/map/memo/link-triage.md`（`- A → B — 原因`）
 - 退出码：`0` 一致（可带提示）/ `1` 漂移 / `2` 参数错误
 
@@ -134,7 +135,7 @@ manifest：`{ "dir": "docs/devref", "docs": [{ "name", "url", "note" }] }`；url
     "size": "warn",                // 规模审查（阈值见 hints）
     "root-consistency": "warn",    // root.md 派生表 vs 模块节一致性
     "index-consistency": "warn",   // index.md 导航 vs 真实模块
-    "index-format": "warn",        // llms.txt 式 H1+摘要
+    "index-format": "warn",        // llms.txt 式 H1+摘要 + 导航概况规范（≤30 字名词短语/待填/失真）
     "doc-hygiene": "warn"          // 语义陈旧疤痕（corrected/reversed/TODO/⚠/过时…；豁免标记豁免）
   },
   "hints": { "maxDocLines": 200, "maxIndexModules": 15, "maxTreeNoted": 100 }

@@ -275,7 +275,7 @@ fs.writeFileSync(ra, fs.readFileSync(ra, 'utf8')
   .replace('- （待填）`<模块或文件路径>` — 与<本模块>的关系', '- `b` — 依赖其服务（双向）'));
 run([path.join(SKILL, 'sync.mjs'), rm]);
 const rmTable = fs.readFileSync(path.join(rm, 'docs/map/root.md'), 'utf8');
-check('root.md 表汇总职责/负责', /业务编排/.test(rmTable) && /@alice/.test(rmTable), rmTable);
+check('root.md 表汇总职责(3列表头无负责)', /业务编排/.test(rmTable) && /负责 \|/.test(rmTable) === false, rmTable);
 check('root.md 表汇总关联 b', /`b`/.test(rmTable.split('MODULE_TABLE_BEGIN')[1] || ''), rmTable);
 r = run([path.join(SKILL, 'check.mjs'), rm]);
 check('root 一致性 check 通过(links 双向标记齐)', r.status === 0 && !/root\.md 表/.test(r.out), r.out.slice(-500));

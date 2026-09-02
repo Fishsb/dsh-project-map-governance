@@ -12,6 +12,8 @@
 
 ### Fixed
 
+- **导航概况规范（v3.1）**：index.md 导航概况标准化——≤40 字高密度描述含职责要点（见导航即理解，区别于记忆极简路由）；semantics 报概况待填（warn 级不随 strictSemantics 升级）、index-format 报超长/失真（子串关联判定）。
+- **root.md 派生表 3 列化**：去"负责"列（模块|职责|相关模块；运行时/维护信息分离，负责留 root/<模块>.md）；sync 汇总、check root-consistency、init 模板、smoke 同步。
 - **治理逻辑完整性（规则引擎）**：
   - 边界常量单源化进 lib-parse（IGNORE_NAMES/ROOT_DOC/BINARY_EXT/isCfgFile/safeName/governedRootDocs），check/sync/init 统一 import。
   - semantics 守护根级配置文件模块 root 文档；待填判定兼容异常拼接。

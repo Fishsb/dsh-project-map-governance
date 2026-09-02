@@ -227,6 +227,16 @@ const HINT_TREE_NOTED = cfgHints.maxTreeNoted ?? 100;
         if (v === '（待填）' || v.startsWith('（待填）')) problems.push(`${d}.${label}=（待填）`);
       }
     }
+    // 导航概况待填：始终提示（warn 级，不随 strictSemantics 升级为 error——概况是导航增强非核心语义）
+    const idx = P.readText(path.join(mapDir, 'index.md'));
+    if (idx) {
+      const sums = P.extractIndexNavSummaries(idx);
+      for (const [mod, sum] of sums) {
+        if (!sum || sum === '概况待填' || sum === '职责待填' || sum === '待填') {
+          warns.push({ rule: 'semantics', problems: [`index.${mod}.概况=（待填）（导航概况：≤40 字含模块职责要点）`] });
+        }
+      }
+    }
   }
   add('semantics', problems);
 }
@@ -285,7 +295,7 @@ const HINT_TREE_NOTED = cfgHints.maxTreeNoted ?? 100;
           if (text) {
             const f = P.extractModuleFields(text);
             if (row.duty !== f.duty) problems.push(`root.md 表职责与 root/${d}.md 不一致（运行 sync 刷新）`);
-            if (row.owner !== f.owner) problems.push(`root.md 表负责与 root/${d}.md 不一致（运行 sync 刷新）`);
+            // v3.1："负责"为维护信息，不进派生表（运行时/维护分离）；一致性由 root/<模块>.md 自身维护
           }
         }
       }
@@ -319,6 +329,19 @@ const HINT_TREE_NOTED = cfgHints.maxTreeNoted ?? 100;
       const lines = idx.split('\n').filter((l) => l.trim());
       if (!lines.length || !lines[0].startsWith('# ')) problems.push('index.md 缺少 H1 标题（llms.txt 式：`# 项目名`）');
       else if (!lines.slice(1, 4).some((l) => l.startsWith('>'))) problems.push('index.md 缺少一句话摘要 blockquote（`> ...`）');
+      // v3.1 导航概况规范：仅查"已填概况"格式（超长/失真）；待填归 semantics 规则（index.x.概况）
+      const sums = P.extractIndexNavSummaries(idx);
+      for (const [mod, sum] of sums) {
+        if (!sum || sum === '职责待填' || sum === '概况待填' || sum === '待填') continue;
+        if (sum.length > 40) problems.push(`index.md 导航 ${mod} 概况 ${sum.length} 字 >40（信息密度优先，控制在 40 字内）`);
+        const rootText = P.readText(path.join(mapDir, 'root', `${mod}.md`));
+        if (rootText) {
+          const duty = P.extractModuleFields(rootText).duty;
+          // 关联判定：概况首段（到首个分隔符，取 ≥4 字）或概况整体前 8 字应出现在职责中；否则疑似失真
+          const seg = sum.split(/[·、/ ：:（）()]/).find((w) => w.length >= 4) || sum.slice(0, 8);
+          if (duty && seg && !duty.includes(seg)) problems.push(`index.md 导航 ${mod} 概况「${sum}」与 root/${mod}.md 职责无关联段「${seg}」（概况失真，请核对）`);
+        }
+      }
     }
   }
   add('index-format', problems);

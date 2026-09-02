@@ -4,9 +4,9 @@
 
 ## 导航
 
-- `src` — 见 root/src.md（插件契约层：注册 6 个 DSH 原生工具）
-- `scripts` — 见 root/scripts.md（构建与素材管理（build.sh 等），源码无关）
-- `engine` — 见 root/engine.md（规则引擎：init/sync/check/adr/status/reconcile/devref + 公共层 + MCP）
+- `src` — 见 root/src.md（插件契约 · DSH 工具注册）
+- `scripts` — 见 root/scripts.md（构建与素材管理 · build.sh）
+- `engine` — 见 root/engine.md（规则引擎 · 命令与公共层 · MCP）
 
 ## 治理
 

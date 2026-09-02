@@ -146,6 +146,7 @@ export function extractRelatedModules(text, knownDirs = null) {
 }
 
 // ---- root.md 派生表 ----
+// v3.1：表 = 模块|职责|相关模块（运行时三要素；"负责"为维护信息，下沉 root/<模块>.md 不进派生表，v11 运行时/维护分离）
 export function parseRootTable(content) {
   const b = content.indexOf(TABLE_BEGIN);
   const e = content.indexOf(TABLE_END);
@@ -153,15 +154,33 @@ export function parseRootTable(content) {
   const table = content.slice(b, e);
   const rows = new Map();
   for (const line of table.split('\n')) {
-    const m = line.match(/^\|\s*`([^`]+)`\s*\|([^|]*)\|([^|]*)\|([^|]*)\|/);
-    if (m) rows.set(m[1], { duty: m[2].trim(), related: m[3].trim(), owner: m[4].trim() });
+    const m = line.match(/^\|\s*`([^`]+)`\s*\|([^|]*)\|([^|]*)\|/);
+    if (m) rows.set(m[1], { duty: m[2].trim(), related: m[3].trim() });
   }
   return { table, rows };
 }
 
 // ---- index.md 导航 ----
+// 导航行格式：`- \`模块\` — 见 root/<模块>.md（<概况：名词短语 ≤30 字，覆盖模块职责要点>）`
+// v3.1：概况规范化（吸收 managing-memory v9/v10 概况规则——内容范围路由，防只概括开头误导）
 export function extractIndexNav(content) {
   return new Set([...(content || '').matchAll(/^- `([^`]+)` — 见 root\//gm)].map((m) => m[1]));
+}
+export function extractIndexNavSummaries(content) {
+  const map = new Map();
+  // 概况 = 行内最后一个（…）括号组（容忍概况内嵌套括号）；无括号视为待填
+  for (const m of (content || '').matchAll(/^- `([^`]+)` — 见 root\/[^\n]+/gm)) {
+    const line = m[0];
+    const mod = m[1];
+    const open = line.lastIndexOf('（');
+    const close = line.lastIndexOf('）');
+    if (open >= 0 && close > open) {
+      map.set(mod, line.slice(open + 1, close).trim());
+    } else {
+      map.set(mod, '');
+    }
+  }
+  return map;
 }
 
 // ---- CHANGELOG [Unreleased] ----

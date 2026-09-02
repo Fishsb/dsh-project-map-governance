@@ -34,6 +34,8 @@
   - dead-links 扩展扫描 root/index/decisions 内链接（此前 root 内部死链盲区）；修复 index.md 与 init 模板「更新日志」链接少一层 `../` 的死链；修复 devref.mjs 登记 index 链接 `../` → `../../`。
   - changelog 无 git tag 基线时给 warn 提示（此前 error 静默失效）。
   - governance.schema.json 补 untracked-strict 粒度降级语义说明。
+- **导航概况规范（v3.1，吸收 managing-memory 概况思想但适配治理场景）**：index.md 导航概况 = ≤40 字高密度描述（含模块职责要点/关键实体，让模型见导航即理解；区别于记忆插件的 ≤30 字极简路由标签——治理文档导航即信息，漏要点=漂移风险）；check semantics 报概况待填（始终 warn 不随 strictSemantics 升级）、index-format 报超长/与 root 职责失真（子串关联判定）。
+- **root.md 派生表去"负责"列**（v11 运行时/维护信息分离）：表 = 模块|职责|相关模块 三要素；"负责"为维护信息留在 root/<模块>.md 不进派生表（sync 汇总/check 一致性同步改）。
 
 ## [0.1.0] - 2026-09-02
 
