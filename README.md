@@ -13,21 +13,21 @@
 
 ## 工具（本插件注册到 Harness）
 
-| 工具 | 作用 |
+| 工具（DSH 注册名） | 作用 |
 |---|---|
-| `project_map_governance_init` | 初始化治理：AGENTS/CLAUDE + docs/map + CHANGELOG + pre-commit |
-| `project_map_governance_sync` | 改动后同步：tree 按粒度刷新 + root.md 派生表 + index reconcile |
-| `project_map_governance_check` | 规则审查（结构化返回）：dead-links / relatedness / changelog / semantics / … |
-| `project_map_governance_adr` | 新建架构决策记录 ADR-NNNN.md |
-| `project_map_governance_status` | 治理状态快照（配置/粒度/模块/ADR/reconcile 天数） |
-| `project_map_governance_reconcile` | 文档卫生 reconcile 清单 |
+| `_dsh_external_project_map_governance_init` | 初始化治理：AGENTS/CLAUDE + docs/map + CHANGELOG + pre-commit |
+| `_dsh_external_project_map_governance_sync` | 改动后同步：tree 按粒度刷新 + root.md 派生表 + index reconcile |
+| `_dsh_external_project_map_governance_check` | 规则审查（结构化返回）：dead-links / relatedness / changelog / semantics / … |
+| `_dsh_external_project_map_governance_adr` | 新建架构决策记录 ADR-NNNN.md |
+| `_dsh_external_project_map_governance_status` | 治理状态快照（配置/粒度/模块/ADR/reconcile 天数） |
+| `_dsh_external_project_map_governance_reconcile` | 文档卫生 reconcile 清单 |
 
 ## 引擎与形态
 
-引擎（Node 标准库脚本，**零第三方依赖**，运行于 Harness 自带 Node 22+）
+**引擎**（Node 标准库脚本，**零第三方依赖**，运行于 Harness 自带 Node 22+）**不在本仓库**，随 skill 目录独立维护（`C:\Users\lk\.dsh\skills\project-map-governance`）：
 
 ```
-scripts/
+<skill-dir>/scripts/
 ├── lib-parse.mjs   统一解析层（文档格式 / 配置 schema 单一源）
 ├── lib-links.mjs   跨模块引用扫描器（相对/绝对导入）
 ├── init / sync / check / adr / status / reconcile / devref
@@ -37,7 +37,8 @@ scripts/
 本插件是**引擎的一层薄契约**：把同套脚本包装成 DSH 原生工具（`check` 走 `--json` 结构化返回）。因此：
 
 - pre-commit hook、CLI、DSH 插件、MCP —— 四方共用同一引擎，行为一致
-- 引擎的完整文档与迁移说明见本仓库根 `docs/`（`SKILL.md`）或引擎所在 skill 目录
+- 本仓库只含**插件契约**：`src/` 注册 6 个 DSH 工具，`scripts/build.sh` 是仓库自身构建脚本（非引擎命令）
+- 引擎完整文档与迁移说明见 skill 目录 `SKILL.md`
 - 项目级产物（`docs/map/**`）是**项目内文档**，不入本仓库
 
 ## 安装与注入
@@ -58,6 +59,8 @@ bash scripts/build.sh
 ```
 
 > 无 DSH 源码 checkout 的环境下，可将预构建的 `lib/` 一并放入包内（默认被 `.gitignore` 忽略以保持仓库纯净）；`lib/index.js` 与本仓库 `src/index.ts` 一一对应。
+
+> 本仓库 clone 后即本地开发/注入用；如已 clone 到别的目录名，注入/构建时以实际目录为准。
 
 注入成功后，6 个治理工具出现在 Harness 工具表中（带参数 schema 与结构化返回），无需再走 bash。
 
@@ -86,10 +89,10 @@ v2 及更早的 legacy 字段（`strict`/`strictLinks`/`changelog`/`strictSemant
 ## 为其他 agent 提供（MCP）
 
 ```bash
-claude mcp add project-map-governance -- node <repo>/scripts/mcp-server.mjs
+claude mcp add project-map-governance -- node <skill-dir>/scripts/mcp-server.mjs
 ```
 
-以 MCP 工具形式向任意支持 MCP 的 agent 暴露同 6 个能力。
+`<skill-dir>` 即上文引擎所在 skill 目录。以 MCP 工具形式向任意支持 MCP 的 agent 暴露同 6 个能力。
 
 ## 兼容性
 

@@ -1,6 +1,6 @@
 # 项目地图 · dsh-project-map-governance-plugin
 
-> dsh-project-map-governance 插件：DeepSeek Harness 原生治理工具包（SDK 原生 schema 校验 + Codis 上下文，派生工具链同构）。本文件是 LLM 友好导航（llms.txt 式）：先读这一句 + 导航，细节按链接按需取。
+> dsh-project-map-governance：DeepSeek Harness 原生**项目地图 + 更新日志治理**工具包（规则引擎化 check，AGENTS/docs/map 防漂移）。本仓库是引擎的**插件薄契约层**——把 skill 目录的 6 个治理脚本注册为 DSH 原生工具；引擎（单一事实源）随 skill 目录独立演进。本文件是 LLM 友好导航（llms.txt 式）：先读这一句 + 导航，细节按链接按需取。
 
 ## 导航
 
@@ -14,6 +14,8 @@
 - [工程约定](conventions.md) — 按需创建（技术栈/命令/模式）
 - [架构决策](decisions/README.md) — ADR 记录（新增：`node <skill>/scripts/adr.mjs . "<标题>"`）
 - [更新日志](../CHANGELOG.md)
+
+> **地图边界**：按引擎约定，根级通用文档（AGENTS/CLAUDE/README/CHANGELOG/LICENSE/CONTRIBUTING/CODE_OF_CONDUCT）与根级配置文件（package.json/tsconfig.json 等）不入 tree 登记；前者见仓库根，后者见 `root/package_json.md`、`root/tsconfig_json.md`（语义字段待人工/agent 补充）。
 
 ## Optional
 

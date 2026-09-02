@@ -10,7 +10,7 @@
     "dead-links": "error",
     "untracked-strict": "off",
     "relatedness": "warn",
-    "changelog": "error",
+    "changelog": "off",
     "semantics": "error",
     "size": "warn",
     "root-consistency": "warn",

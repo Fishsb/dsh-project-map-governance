@@ -11,21 +11,21 @@ It installs a sustainable, scalable governance layer onto vibe / AI-coding proje
 
 ## Tools (registered natively)
 
-| Tool | Purpose |
+| Tool (DSH-registered name) | Purpose |
 |---|---|
-| `project_map_governance_init` | init governance: AGENTS/CLAUDE + docs/map + CHANGELOG + pre-commit |
-| `project_map_governance_sync` | refresh map after changes: granular tree + derived root.md + index reconcile |
-| `project_map_governance_check` | rule review (structured): dead-links / relatedness / changelog / semantics / … |
-| `project_map_governance_adr` | create an ADR-NNNN.md record |
-| `project_map_governance_status` | governance status snapshot |
-| `project_map_governance_reconcile` | document-hygiene reconcile list |
+| `_dsh_external_project_map_governance_init` | init governance: AGENTS/CLAUDE + docs/map + CHANGELOG + pre-commit |
+| `_dsh_external_project_map_governance_sync` | refresh map after changes: granular tree + derived root.md + index reconcile |
+| `_dsh_external_project_map_governance_check` | rule review (structured): dead-links / relatedness / changelog / semantics / … |
+| `_dsh_external_project_map_governance_adr` | create an ADR-NNNN.md record |
+| `_dsh_external_project_map_governance_status` | governance status snapshot |
+| `_dsh_external_project_map_governance_reconcile` | document-hygiene reconcile list |
 
 ## Engine & shape
 
-Engine = Node stdlib scripts (zero third-party deps, Node 22+).
+Engine = Node stdlib scripts (zero third-party deps, Node 22+). **It lives in the skill directory, not in this repo** (`C:\Users\lk\.dsh\skills\project-map-governance`):
 
 ```
-scripts/
+<skill-dir>/scripts/
 ├── lib-parse.mjs   unified parsing layer (single source for formats / config schema)
 ├── lib-links.mjs   cross-module reference scanner (relative & absolute imports)
 ├── init / sync / check / adr / status / reconcile / devref
@@ -33,6 +33,10 @@ scripts/
 ```
 
 The plugin is a thin contract over the engine (tools wrap the scripts; `check` uses `--json` structured output), so the **pre-commit hook, CLI, DSH plugin and MCP all share the same engine**.
+
+- This repo contains only the **plugin contract**: `src/` registers the 6 DSH tools; `scripts/build.sh` is this repo's own build script (not an engine command).
+- Full engine docs & migration notes: skill dir `SKILL.md`.
+- Project-level artifacts (`docs/map/**`) are per-project docs, not part of this repo.
 
 ## Install & inject
 
@@ -64,8 +68,10 @@ Legacy fields (`strict`/`strictLinks`/`changelog`/`strictSemantics`) are auto-mi
 ## MCP (for other agents)
 
 ```bash
-claude mcp add project-map-governance -- node <repo>/scripts/mcp-server.mjs
+claude mcp add project-map-governance -- node <skill-dir>/scripts/mcp-server.mjs
 ```
+
+Where `<skill-dir>` is the skill directory holding the engine (see above). Exposes the same 6 capabilities to any MCP-capable agent.
 
 ## Compatibility
 

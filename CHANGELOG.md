@@ -7,6 +7,21 @@
 
 ## [Unreleased]
 
+### Added
+
+- 架构决策记录 ADR-0001：薄契约层架构（插件仓库只含工具注册，引擎随 skill 目录独立演进）。
+- docs/map 语义回填：root/src.md、root/scripts.md 的 职责/负责/改动影响/相关模块；index.md 一句话摘要与引擎位置声明；AGENTS.md/CLAUDE.md 一句话描述。
+
+### Changed
+
+- 版本标注统一 v3：AGENTS.md、CLAUDE.md、pre-commit hook（原为 v2 生成文案）。
+- README/README.en：工具名更正为实际注册名 `_dsh_external_project_map_governance_*`；引擎位置声明改为「skill 目录独立维护，非本仓库 scripts/」；MCP 示例路径更正。
+- governance.json：`rules.changelog` 由 `error` 改为 `off`——仓库尚无 git tag 基线，error 门禁实际永不触发（无 tag 时 check 跳过），改 off 使声明与行为一致（发布打 tag 后可再开启）。
+
+### Fixed
+
+- docs/map/decisions/ADR-0001.md 状态行生成缺陷（`acceptedproposed` 拼接）已修正为规范枚举。
+
 ## [0.1.0] - 2026-09-02
 
 ### Added
