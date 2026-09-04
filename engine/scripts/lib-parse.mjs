@@ -362,7 +362,7 @@ export function navDepthAudit(target, mapDir, maxDepth = 3) {
     for (const nx of edges.get(cur) || []) if (!depth.has(nx)) { depth.set(nx, dep + 1); q.push(nx); }
   }
   const unreachable = docs.filter((d) => !depth.has(d));
-  const deep = docs.filter((d) => (depth.get(d) ?? Infinity) > maxDepth).map((d) => ({ doc: d, depth: depth.get(d) }));
+  const deep = docs.filter((d) => depth.has(d) && depth.get(d) > maxDepth).map((d) => ({ doc: d, depth: depth.get(d) }));
   return { docs, depth, unreachable, deep, maxDepth };
 }
 
