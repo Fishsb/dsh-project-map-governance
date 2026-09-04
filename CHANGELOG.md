@@ -26,7 +26,12 @@
 - governance.json：`rules.changelog` 由 `error` 改为 `off`——仓库尚无 git tag 基线，error 门禁实际永不触发（无 tag 时 check 跳过），改 off 使声明与行为一致（发布打 tag 后可再开启）。
 - 治理范围新增 `engine` 模块；link-triage 登记 engine→src/scripts 噪音边（lib-links 注释示例 + smoke 测试夹具误判）。
 
+- **tree-duty 规则 + index-format 降敏（引擎 v3.5 审查补充）**：tree 文件「职责待填」纳入规则检查（默认 warn，本仓 20 处已全部补齐）；index-format 移除「概况失真」子串关联判定（中文短概况词面脆弱易误报），保留 ≤40 字格式校验、语义交 reconcile 人读。
+- **tree 文件职责补齐**：tree/engine.md（17 文件）/ tree/src.md / tree/scripts.md / tree/root-files.md 全部补一句职责。
+
 ### Fixed
+
+- **user-facts 门禁中文分隔符静默失效（审查修复）**：facts.md「约束范围」用中文顿号（`、`）分隔时，引擎只按英文逗号切分导致整串永不命中变更路径——门禁从未真正拦截。已修复并补回归用例；SECURITY.md 残留的 ADR-0001 旧口径（「引擎随 skill 目录独立演进」）同步更正为 ADR-0002 现行架构。
 
 - docs/map/decisions/ADR-0001.md 状态行生成缺陷（`acceptedproposed` 拼接）已修正为规范枚举；**引擎 adr.mjs 状态行拼接 bug 根因修复**（`> 状态：.*` 整行替换）。
 - 引擎缺陷（随本仓 engine/）：init 不再为配置文件模块生成 `../tree/<模块>.md` 死链尾行；sync 增补 root/ 孤儿文档清理、模块清空时不再提前退出（此前 tree/root 陈旧文档残留）。本仓库 root/package_json.md、root/tsconfig_json.md 对应死链尾行已清除。

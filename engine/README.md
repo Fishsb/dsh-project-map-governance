@@ -11,7 +11,7 @@
 |---|---|
 | 这是什么 / 设计要点 | `SKILL.md` 核心心智 |
 | 命令用法（init/sync/check/status/reconcile/adr/devref） | `SKILL.md` 三种操作 + 运行 |
-| 配置 `governance.json` / 13 规则表 | `SKILL.md` 治理配置 + `governance.schema.json`（规则描述由 `lib-parse.mjs` RULE_DESC 生成，`scripts/gen-schema-check.mjs --fix` 重写） |
+| 配置 `governance.json` / 14 规则表 | `SKILL.md` 治理配置 + `governance.schema.json`（规则描述由 `lib-parse.mjs` RULE_DESC 生成，`scripts/gen-schema-check.mjs --fix` 重写） |
 | 引擎版本演进 | [`CHANGELOG.md`](./CHANGELOG.md) |
 | 回归测试 | `test/smoke.mjs`（用例数以运行输出为准：`node test/smoke.mjs`） |
 

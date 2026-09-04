@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-本仓库是 DeepSeek Harness 插件；引擎行为随 skill 目录独立演进。安全修复将策展到 `main` 分支与下一个插件版本。
+本仓库是 DeepSeek Harness 插件，同时承载引擎源码（`engine/` 子目录，ADR-0002 单一仓库双目录；skill 目录为运行部署副本）。安全修复将策展到 `main` 分支与下一个插件版本。
 
 | Version | Supported |
 | --- | --- |

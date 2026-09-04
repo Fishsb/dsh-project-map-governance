@@ -8,7 +8,13 @@
 
 ### Added
 
+- **tree-duty 职责待填规则（v3.5 审查补充）**：`tree/*.md` 的「(职责待填)」行数提示（默认 warn）——文件级地图「每文件一句职责」是下钻价值所在，此前不进任何规则检查。14 规则注册同步 + smoke T25 两用例（103 PASS）。
+- **index-format 失真判定移除（v3.5 审查补充）**：「概况失真」子串关联判定（概况首段须在职责中词面命中）对中文短概况脆弱——职责措辞微调即误报。保留 ≤40 字格式校验，语义正确性交 reconcile 人读防线（与 ADR 状态等机检规则分工：格式机检/语义人读）。
 - **nav-depth 导航可达性规则（v3.5）**：模型改代码应在 3 次主动检索内触达所有受影响同步文档——check 从治理入口（AGENTS/CLAUDE=自动加载 0 跳）BFS 文档指针图（md 链接/反引号相对路径/地图锚定 `root|tree|decisions|memo|devref/…`/「见 x.md」/decisions/README 隐式登记 ADR；目录指针如 `tree/` 展开为目录下文档），不可达或超 `hints.navMaxDepth`（缺省 3）即违规：孤儿补入链、超深压层级。默认 warn；本仓自治理升 error。13 规则注册同步 + smoke T24 五用例（标准结构无误报/孤儿检出/补链修复/4 层链超深/hints 放宽）。
+
+### Fixed
+
+- **user-facts 约束范围分隔符静默失效（v3.5 审查发现）**：`factScopeList` 此前只按英文逗号切分，中文顿号/逗号分隔的「约束范围」整串无法命中变更路径——user-facts 门禁对中文书写习惯的事实**从未真正拦截过**。修复：分隔符兼容 `,`/`，`/`、`；smoke 增顿号命中回归用例（101 PASS）。
 
 - **adr-status-consistency 规则（v3.4）**：`decisions/README.md` 状态列 ↔ `ADR-NNNN.md`「> 状态：」行一致性校验（默认 error=门禁）；状态行残留选项菜单（`｜ proposed ｜ …`）判为模板疤痕一并拦截；ADR 文件未登记索引同样报错。`adr.mjs` 生成改为单一状态词（选项菜单移除，疤痕从源头根治）；解析层新增 `parseAdrStatusLine`/`parseAdrIndex`（lib-parse 统一解析层）。源自 dsh-managing-memory 治理漂移事故复盘（ADR v1/v2 状态漂移靠 reconcile 人读兜底 → 升级为 check 机检拦截）。12 规则注册同步（RULE_IDS/RULE_DESC/defaultRules/schema/smoke T23 七用例）。
 

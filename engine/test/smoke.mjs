@@ -433,6 +433,13 @@ fs.writeFileSync(ff, '# 用户确定事实\n\n## 事实\n\n### [F-001] src 采�
 r = run([path.join(SKILL, 'check.mjs'), uf, '--json']);
 const ufj2 = parseJson(r.out);
 check('superseded 缺冲突处理 → warn', ufj2 && ufj2.warns.some((w) => w.rule === 'user-facts'), r.out.slice(0, 300));
+// 约束范围中文顿号分隔 → 正确切分并命中变更（v3.5 修复：此前只按英文逗号切分，顿号串永不命中=门禁静默失效）
+fs.writeFileSync(ff, '# 用户确定事实\n\n## 事实\n\n### [F-001] src 采用 ESM\n- 状态：active\n- 确认日期：2026-09-02\n- 约束范围：`src/`、`lib/`\n- 事实：src 模块保持 ESM 架构\n- 冲突处理：\n');
+fs.mkdirSync(path.join(uf, 'lib'), { recursive: true });
+fs.writeFileSync(path.join(uf, 'lib', 'c.js'), 'export const c=1;\n');
+spawnSync('git', ['add', '-A'], { cwd: uf });
+r = run([path.join(SKILL, 'check.mjs'), uf]);
+check('顿号分隔约束范围命中变更 → 拦截', r.status === 1 && /user-facts|F-001/.test(r.out), r.out.slice(-500));
 
 // ============ T23 adr-status-consistency 状态一致性门禁 ============
 console.log('\n[T23] adr-status-consistency');
@@ -508,6 +515,21 @@ fs.writeFileSync(nvCfg, JSON.stringify(nvCfgObj, null, 2) + '\n');
 r = run([path.join(SKILL, 'check.mjs'), nv, '--json']);
 const nvj4 = parseJson(r.out);
 check('navMaxDepth=5 后超深提示消失', nvj4 && !nvj4.warns.some((w) => w.rule === 'nav-depth' && w.problems.some((p) => p.includes('> 预算'))), r.out.slice(0, 300));
+
+// ============ T25 tree-duty 文件职责待填 ============
+console.log('\n[T25] tree-duty');
+const td = path.join(BASE, 'treeduty');
+fs.mkdirSync(path.join(td, 'src'), { recursive: true });
+fs.writeFileSync(path.join(td, 'src', 'a.js'), 'export const a=1;\n');
+run([path.join(SKILL, 'init.mjs'), td, '--level', 'files']);
+run([path.join(SKILL, 'sync.mjs'), td]); // files 级 tree/src.md 生成，职责行=待填
+r = run([path.join(SKILL, 'check.mjs'), td, '--json']);
+const tdj0 = parseJson(r.out);
+check('默认：tree 职责待填进提示', tdj0 && tdj0.warns.some((w) => w.rule === 'tree-duty' && w.problems.some((p) => p.includes('tree/src.md'))), r.out.slice(0, 400));
+fs.writeFileSync(path.join(td, 'docs/map/tree/src.md'), fs.readFileSync(path.join(td, 'docs/map/tree/src.md'), 'utf8').replace('(职责待填)', '测试文件职责'));
+r = run([path.join(SKILL, 'check.mjs'), td, '--json']);
+const tdj1 = parseJson(r.out);
+check('补齐后提示消失', tdj1 && !tdj1.warns.some((w) => w.rule === 'tree-duty' && w.problems.some((p) => p.includes('tree/src.md'))), r.out.slice(0, 300));
 
 console.log(`\n==== 冒烟结果: ${pass} PASS / ${fail} FAIL ====`);
 process.exit(fail ? 1 : 0);

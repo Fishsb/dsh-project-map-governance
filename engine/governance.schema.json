@@ -166,6 +166,14 @@
             "error"
           ],
           "description": "导航可达性：治理文档从 AGENTS.md 起 ≤3 跳可达（hints.navMaxDepth 可调），不可达/超深=违规（默认 warn；模型 3 次检索预算）"
+        },
+        "tree-duty": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "tree/*.md 文件职责待填（「(职责待填)」行数提示；每文件一句职责=文件级地图的下钻价值）"
         }
       }
     },

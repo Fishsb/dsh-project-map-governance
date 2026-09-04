@@ -140,7 +140,8 @@ manifest：`{ "dir": "docs/devref", "docs": [{ "name", "url", "note" }] }`；url
     "doc-hygiene": "warn",         // 语义陈旧疤痕（corrected/reversed/TODO/⚠/过时…；豁免标记豁免）
     "user-facts": "error",         // 变更触及 active 用户确定事实（facts.md 约束范围）→ 门禁；文档完整性缺失=warn
     "adr-status-consistency": "error", // decisions/README 状态列 ↔ ADR 状态行一致（含选项菜单残留=模板疤痕）→ 门禁
-    "nav-depth": "warn"            // 导航可达性：从 AGENTS 起 ≤3 跳（hints.navMaxDepth 可调）——「3 次检索预算」；自治理项目可升 error
+    "nav-depth": "warn",           // 导航可达性：从 AGENTS 起 ≤3 跳（hints.navMaxDepth 可调）——「3 次检索预算」；自治理项目可升 error
+    "tree-duty": "warn"            // tree/*.md 文件职责待填提示（每文件一句职责=文件级地图的下钻价值）
   },
   "hints": { "maxDocLines": 200, "maxIndexModules": 15, "maxTreeNoted": 100 }
 }

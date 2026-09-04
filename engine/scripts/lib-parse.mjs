@@ -16,7 +16,7 @@ import path from 'node:path';
 export const TABLE_BEGIN = '<!-- MODULE_TABLE_BEGIN -->';
 export const TABLE_END = '<!-- MODULE_TABLE_END -->';
 export const CONFIG_VERSION = 3;
-export const RULE_IDS = ['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts', 'adr-status-consistency', 'nav-depth'];
+export const RULE_IDS = ['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts', 'adr-status-consistency', 'nav-depth', 'tree-duty'];
 export const SEVERITIES = ['off', 'warn', 'error'];
 // 规则描述单一源（schema 生成/文档引用；加规则在此补一行 + defaultRules + check 规则块 + smoke）
 export const RULE_DESC = {
@@ -33,6 +33,7 @@ export const RULE_DESC = {
   'user-facts': '变更触及 active 用户确定事实（facts.md 约束范围）→ 按 severity；默认 error=门禁。文档完整性缺失恒为 warn 提示',
   'adr-status-consistency': 'decisions/README.md 状态列 ↔ ADR-NNNN.md 状态行一致性 + 状态行选项菜单残留（默认 error=门禁）',
   'nav-depth': '导航可达性：治理文档从 AGENTS.md 起 ≤3 跳可达（hints.navMaxDepth 可调），不可达/超深=违规（默认 warn；模型 3 次检索预算）',
+  'tree-duty': 'tree/*.md 文件职责待填（「(职责待填)」行数提示；每文件一句职责=文件级地图的下钻价值）',
 };
 // 校验规则注册完整性：check 实际执行的规则 id 集 = RULE_IDS（防漏注册静默失效）
 export function assertRuleRegistry(executedIds) {
@@ -86,6 +87,7 @@ export function defaultRules() {
     'user-facts': 'error',   // 变更触及 active 用户确定事实 → 门禁（默认 error）；文档完整性缺失为 warn 提示
     'adr-status-consistency': 'error', // decisions/README 状态列 ↔ ADR 文件状态行一致（默认 error=门禁；状态行残留选项菜单同违规）
     'nav-depth': 'warn',    // 导航可达性 ≤3 跳（默认 warn 提示；error 也可，涉新文件时 sync 提示引导补链）
+    'tree-duty': 'warn',    // tree 文件职责待填 → 补齐提示（默认 warn）
   };
 }
 
@@ -400,6 +402,7 @@ export function parseFacts(text) {
 }
 
 export function factScopeList(fact) {
-  // 约束范围：反引号路径/模块/关键词 → 数组（去空）
-  return (fact.scope || '').split(',').map((s) => s.replace(/`/g, '').trim()).filter(Boolean);
+  // 约束范围：反引号路径/模块/关键词 → 数组（去空）。分隔符兼容：英文逗号 / 中文逗号 / 中文顿号
+  // （此前只按 ',' 切分，中文顿号 `、` 分隔的整串永远无法命中变更路径——user-facts 门禁静默失效）
+  return (fact.scope || '').split(/[,，、]/).map((s) => s.replace(/`/g, '').trim()).filter(Boolean);
 }
