@@ -16,7 +16,7 @@ import path from 'node:path';
 export const TABLE_BEGIN = '<!-- MODULE_TABLE_BEGIN -->';
 export const TABLE_END = '<!-- MODULE_TABLE_END -->';
 export const CONFIG_VERSION = 3;
-export const RULE_IDS = ['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts'];
+export const RULE_IDS = ['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts', 'adr-status-consistency'];
 export const SEVERITIES = ['off', 'warn', 'error'];
 // 规则描述单一源（schema 生成/文档引用；加规则在此补一行 + defaultRules + check 规则块 + smoke）
 export const RULE_DESC = {
@@ -31,6 +31,7 @@ export const RULE_DESC = {
   'index-format': 'llms.txt 式 H1+摘要 + 导航概况规范（≤40 字高密度/失真）',
   'doc-hygiene': '语义陈旧疤痕扫描（corrected/reversed/TODO/⚠/过时…；豁免标记豁免）',
   'user-facts': '变更触及 active 用户确定事实（facts.md 约束范围）→ 按 severity；默认 error=门禁。文档完整性缺失恒为 warn 提示',
+  'adr-status-consistency': 'decisions/README.md 状态列 ↔ ADR-NNNN.md 状态行一致性 + 状态行选项菜单残留（默认 error=门禁）',
 };
 // 校验规则注册完整性：check 实际执行的规则 id 集 = RULE_IDS（防漏注册静默失效）
 export function assertRuleRegistry(executedIds) {
@@ -82,6 +83,7 @@ export function defaultRules() {
     'index-format': 'warn',
     'doc-hygiene': 'warn',
     'user-facts': 'error',   // 变更触及 active 用户确定事实 → 门禁（默认 error）；文档完整性缺失为 warn 提示
+    'adr-status-consistency': 'error', // decisions/README 状态列 ↔ ADR 文件状态行一致（默认 error=门禁；状态行残留选项菜单同违规）
   };
 }
 
@@ -259,6 +261,30 @@ export function hygieneIgnored(text) {
 }
 
 export const HYGIENE_SCAR = /(corrected|reversed|earlier draft|TODO|⚠|过时|已废弃|临时方案|此句已不适用)/i;
+
+// ---- ADR 状态一致性（adr-status-consistency 规则的解析层）----
+// ADR 文件状态行：`> 状态：accepted（可选后注）` —— 单一状态词 + 任意后注（如 superseded 的取代说明）
+export function parseAdrStatusLine(text) {
+  const m = (text || '').match(/^>\s*状态[:：]\s*(.+)$/m);
+  if (!m) return null;
+  const v = m[1].trim();
+  // 首词 = 状态词（容忍 `accepted（v2…）` 后注）；`｜` 分隔的选项菜单 = 模板残留（疤痕）
+  const word = v.split(/[（(｜|]/)[0].trim().toLowerCase();
+  if (FACT_STATUSES.includes(word) || ['accepted', 'proposed', 'deprecated', 'superseded'].includes(word)) {
+    return { status: word, residue: /｜/.test(v) || /\|/.test(v), raw: v };
+  }
+  return { status: word, residue: /｜/.test(v) || /\|/.test(v), raw: v };
+}
+
+// decisions/README.md 索引表：`| ADR-0002 | 标题 | accepted | 2026-09-04 |` → Map(id → {title,status,date})
+export function parseAdrIndex(text) {
+  const map = new Map();
+  for (const line of (text || '').split('\n')) {
+    const m = line.match(/^\|\s*(ADR-\d+)\s*\|([^|]*)\|([^|]*)\|([^|]*)\|/);
+    if (m) map.set(m[1], { title: m[2].trim(), status: m[3].trim().toLowerCase(), date: m[4].trim() });
+  }
+  return map;
+}
 
 // ---- 用户确定事实（facts.md）----
 // 格式：每条 `### [F-xxx] 标题` + 字段行 `- **字段**：值`

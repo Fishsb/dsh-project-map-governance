@@ -434,5 +434,40 @@ r = run([path.join(SKILL, 'check.mjs'), uf, '--json']);
 const ufj2 = parseJson(r.out);
 check('superseded 缺冲突处理 → warn', ufj2 && ufj2.warns.some((w) => w.rule === 'user-facts'), r.out.slice(0, 300));
 
+// ============ T23 adr-status-consistency 状态一致性门禁 ============
+console.log('\n[T23] adr-status-consistency');
+const ad = path.join(BASE, 'adr-status');
+fs.mkdirSync(path.join(ad, 'src'), { recursive: true });
+fs.writeFileSync(path.join(ad, 'src', 'a.js'), 'export const a=1;\n');
+run([path.join(SKILL, 'init.mjs'), ad, '--level', 'files']);
+const adrDir = path.join(ad, 'docs/map/decisions');
+r = run([path.join(SKILL, 'adr.mjs'), ad, '测试决策A']);
+check('adr.mjs 生成无选项菜单残留', !/状态.*｜/.test(fs.readFileSync(path.join(adrDir, 'ADR-0001.md'), 'utf8')), r.out.slice(-300));
+check('adr.mjs 登记 README 索引', /ADR-0001/.test(fs.readFileSync(path.join(adrDir, 'README.md'), 'utf8')), r.out.slice(-200));
+// 正向：状态一致 → 不报
+r = run([path.join(SKILL, 'check.mjs'), ad, '--json']);
+const adj = parseJson(r.out);
+check('状态一致 check 全绿', adj && adj.ok && !adj.errors.some((e) => e.rule === 'adr-status-consistency') && !adj.warns.some((w) => w.rule === 'adr-status-consistency'), r.out.slice(0, 300));
+// 反向1：文件头 accepted vs 索引 proposed → error 拦截
+fs.writeFileSync(path.join(adrDir, 'ADR-0001.md'), fs.readFileSync(path.join(adrDir, 'ADR-0001.md'), 'utf8').replace('> 状态：proposed', '> 状态：accepted'));
+r = run([path.join(SKILL, 'check.mjs'), ad]);
+check('文件头/索引状态不一致 → 拦截', r.status === 1 && /adr-status-consistency|不一致/.test(r.out), r.out.slice(-400));
+// 反向2：状态行残留选项菜单 → 拦截（模板疤痕）
+fs.writeFileSync(path.join(adrDir, 'ADR-0001.md'), fs.readFileSync(path.join(adrDir, 'ADR-0001.md'), 'utf8').replace('> 状态：accepted', '> 状态：accepted ｜ proposed ｜ deprecated ｜ superseded'));
+r = run([path.join(SKILL, 'check.mjs'), ad]);
+check('状态行残留选项菜单 → 拦截', r.status === 1 && /选项菜单/.test(r.out), r.out.slice(-400));
+// 反向3：文件存在但索引未登记 → 拦截
+fs.writeFileSync(path.join(adrDir, 'ADR-0001.md'), '> 状态：accepted\n');
+fs.writeFileSync(path.join(adrDir, 'ADR-0002.md'), '# ADR-0002：幽灵决策\n\n> 状态：accepted\n');
+r = run([path.join(SKILL, 'check.mjs'), ad, '--json']);
+const adj2 = parseJson(r.out);
+check('文件未登记索引 → 拦截', adj2 && adj2.errors.some((e) => e.rule === 'adr-status-consistency' && e.problems.some((p) => p.includes('未登记'))), r.out.slice(0, 300));
+// 反向4：状态词非法 → 拦截
+fs.rmSync(path.join(adrDir, 'ADR-0002.md'), { force: true });
+fs.writeFileSync(path.join(adrDir, 'README.md'), fs.readFileSync(path.join(adrDir, 'README.md'), 'utf8').replace('| ADR-0001 | 测试决策A | proposed |', '| ADR-0001 | 测试决策A | 打算做 |'));
+r = run([path.join(SKILL, 'check.mjs'), ad, '--json']);
+const adj3 = parseJson(r.out);
+check('索引状态词非法 → 拦截', adj3 && adj3.errors.some((e) => e.rule === 'adr-status-consistency' && e.problems.some((p) => p.includes('非法'))), r.out.slice(0, 300));
+
 console.log(`\n==== 冒烟结果: ${pass} PASS / ${fail} FAIL ====`);
 process.exit(fail ? 1 : 0);

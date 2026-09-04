@@ -150,6 +150,14 @@
             "error"
           ],
           "description": "变更触及 active 用户确定事实（facts.md 约束范围）→ 按 severity；默认 error=门禁。文档完整性缺失恒为 warn 提示"
+        },
+        "adr-status-consistency": {
+          "enum": [
+            "off",
+            "warn",
+            "error"
+          ],
+          "description": "decisions/README.md 状态列 ↔ ADR-NNNN.md 状态行一致性 + 状态行选项菜单残留（默认 error=门禁）"
         }
       }
     },

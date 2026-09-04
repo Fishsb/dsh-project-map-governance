@@ -32,7 +32,7 @@
 - 状态：active
 - 确认日期：2026-09-02
 - 约束范围：`engine/test/`、`engine/scripts/`
-- 事实：本插件用自己的治理引擎治理自身（AGENTS/docs/map/pre-commit）。引擎任何行为改动必须通过 `engine/test/smoke.mjs` 回归（88 用例）并同步 skill 运行副本（`C:\Users\lk\.dsh\skills\project-map-governance`）后方可提交。
+- 事实：本插件用自己的治理引擎治理自身（AGENTS/docs/map/pre-commit）。引擎任何行为改动必须通过 `engine/test/smoke.mjs` 回归（用例数以运行输出为准，计数声明已去数字化）并同步 skill 运行副本（`C:\Users\lk\.dsh\skills\project-map-governance`）后方可提交。
 - 冲突处理：
 
 ### [F-005] 治理文档导航概况 = 高密度描述（非记忆极简标签）

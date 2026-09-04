@@ -6,7 +6,7 @@
 <!-- MODULE_TABLE_BEGIN -->
 | 模块 | 职责 | 相关模块 |
 |---|---|---|
-| `engine` | 规则引擎（Node 标准库，零依赖）——scripts/ 命令（init/sync/check/status/reconcile/adr/devref）+ lib-parse/lib-links 公共层 + mcp-server；SKILL.md 引擎文档；test/smoke.mjs 回归（84 用例） | `src`、`scripts` |
+| `engine` | 规则引擎（Node 标准库，零依赖）——scripts/ 命令（init/sync/check/status/reconcile/adr/devref）+ lib-parse/lib-links 公共层 + mcp-server；SKILL.md 引擎文档；test/smoke.mjs 回归 | `src`、`scripts` |
 | `scripts` | 仓库内构建与素材管理——build.sh（DSH checkout 探测 + vendor junction + tsc 编译 src→lib） | `src`、`engine` |
 | `src` | 插件契约层——把引擎 6 命令（init/sync/check/adr/status/reconcile）注册为 DSH 原生工具，参数 schema + 结构化返回（check --json） | `engine`、`scripts` |
 <!-- MODULE_TABLE_END -->

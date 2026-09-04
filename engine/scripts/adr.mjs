@@ -33,11 +33,12 @@ const body = fs.existsSync(tpl)
   ? fs.readFileSync(tpl, 'utf8').replace('ADR-0000', `ADR-${n}`).replace('<标题>', title)
   : [
       `# ADR-${n}：${title}`,
-      '', '> 状态：proposed ｜ accepted ｜ deprecated ｜ superseded', '',
+      '', '> 状态：proposed', '',
       '## 背景', '', '## 决策', '', '## 后果', '', '## 替代方案', '', '## 日期', '',
     ].join('\n');
+// 状态行只写单一状态词（选项菜单残留会被 adr-status-consistency 规则拦截为模板疤痕）
 const file = path.join(decDir, `ADR-${n}.md`);
-fs.writeFileSync(file, body.replace(/^> 状态：.*$/m, `> 状态：${status} ｜ proposed ｜ deprecated ｜ superseded`), 'utf8');
+fs.writeFileSync(file, body.replace(/^> 状态：.*$/m, `> 状态：${status}`), 'utf8');
 
 // 登记 README 索引
 const readme = path.join(decDir, 'README.md');
@@ -57,4 +58,5 @@ if (fs.existsSync(readme)) {
 }
 
 console.log(`✅ 已创建 ADR-${n}：${path.relative(target, file)}（状态 ${status}）`);
-console.log('   打开补充「背景/决策/后果/替代方案」。记得把状态推进到 accepted。');
+console.log('   打开补充「背景/决策/后果/替代方案」。拍板后把状态推进到 accepted：');
+console.log(`   同步两处 = 本文件「> 状态：」行 + decisions/README.md 状态列（adr-status-consistency 规则强制一致，error 门禁）。`);

@@ -34,8 +34,8 @@ Engine = Node stdlib scripts (zero third-party deps, Node 22+). **It lives in th
 
 The plugin is a thin contract over the engine (tools wrap the scripts; `check` uses `--json` structured output), so the **pre-commit hook, CLI, DSH plugin and MCP all share the same engine**.
 
-- This repo contains only the **plugin contract**: `src/` registers the 6 DSH tools; `scripts/build.sh` is this repo's own build script (not an engine command).
-- Full engine docs & migration notes: skill dir `SKILL.md`.
+- This repo hosts the **plugin contract** (`src/` registers the 6 DSH tools) plus the **engine source** under `engine/` (ADR-0002, single-repo dual-directory); `scripts/build.sh` is this repo's own build script (not an engine command).
+- Full engine docs & migration notes: `engine/SKILL.md` (deployed copy: skill dir).
 - Project-level artifacts (`docs/map/**`) are per-project docs, not part of this repo.
 
 ## Install & inject

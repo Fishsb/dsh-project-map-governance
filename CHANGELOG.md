@@ -9,6 +9,9 @@
 
 ### Added
 
+- **ADR 状态一致性门禁（adr-status-consistency 规则，引擎 v3.4）**：`decisions/README.md` 状态列 ↔ `ADR-NNNN.md`「> 状态：」行强制一致 + 状态行选项菜单残留拦截（默认 error=漂移拦截 commit）——把 dsh-managing-memory 治理漂移事故（ADR 拍板后文件/索引状态失真，靠 reconcile 人读兜底）升级为 check 机检；`adr.mjs` 生成改为单一状态词从源头根治模板疤痕。
+- **计数声明去数字化（治理纪律）**：现状类文档（README/CONTRIBUTING/root*.md/facts）不再写用例数等易漂移数字（改「以运行输出为准」），历史快照保留原数字——杜绝 v3.1→v3.3 期间 8 处「84 用例」陈旧计数式的漂移。
+
 - **引擎并入本仓库（ADR-0002，supersede ADR-0001）**：`engine/` 子目录承载引擎源码（SKILL.md + scripts/*.mjs + governance.schema.json + test/smoke.mjs）；引擎自定位基于 import.meta.url 故 engine/ 下即插即用；skill 目录降级为运行部署副本。
 - 架构决策记录 ADR-0001：薄契约层架构（插件仓库只含工具注册，引擎随 skill 目录独立演进）。
 - docs/map 语义回填：root/src.md、root/scripts.md 的 职责/负责/改动影响/相关模块；index.md 一句话摘要与引擎位置声明；AGENTS.md/CLAUDE.md 一句话描述。

@@ -5,3 +5,4 @@ lib/
 
 # ---- project-map-governance（瞬态数据，不入库）----
 .internal/
+.gov-bench/

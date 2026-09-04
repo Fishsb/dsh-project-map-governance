@@ -4,13 +4,13 @@
 
 ## 架构约定（重要）
 
-本仓库是**薄契约层**，业务逻辑在**引擎**（`scripts/*.mjs`，随 skill 目录维护）：
+本仓库是**薄契约层**，业务逻辑在**引擎**（`engine/scripts/*.mjs`，ADR-0002：单一仓库双目录，skill 目录为部署运行副本）：
 
 ```
 src/index.ts          ← 插件契约：把引擎命令注册为 DSH 原生工具
+engine/scripts/*.mjs  ← 引擎（本仓 engine/ 子目录，规则/解析/命令的单一事实源）
 scripts/build.sh      ← 构建（tsc + vendor 依赖，需 DSH 源码 checkout）
 lib/                  ← 编译产物（.gitignore，不入库；无 checkout 时与 src 手动同步）
-引擎 scripts/*.mjs    ← 规则/解析/命令的单一事实源（在 skill 目录，不在本仓库）
 ```
 
 修改任何工具行为，优先改**引擎**；本仓库只改工具注册与文档。
@@ -30,7 +30,7 @@ dsh plugin --profile web add <本目录>
 
 ## 测试
 
-- 引擎回归：`node test/smoke.mjs`（84 用例，引擎自带，覆盖三档粒度/迁移/门禁/ADR/卫生）
+- 引擎回归：`node test/smoke.mjs`（引擎自带，覆盖三档粒度/迁移/门禁/ADR/卫生；用例数以运行输出为准）
 - 契约冒烟：注入后在 Harness 会话实测 `init → sync → check --json → status` 链路
 - 提交前务必跑一遍引擎回归，确认无回归。
 

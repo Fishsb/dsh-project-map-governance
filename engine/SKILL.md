@@ -138,14 +138,15 @@ manifest：`{ "dir": "docs/devref", "docs": [{ "name", "url", "note" }] }`；url
     "index-consistency": "warn",   // index.md 导航 vs 真实模块
     "index-format": "warn",        // llms.txt 式 H1+摘要 + 导航概况规范（≤40 字高密度/失真）
     "doc-hygiene": "warn",         // 语义陈旧疤痕（corrected/reversed/TODO/⚠/过时…；豁免标记豁免）
-    "user-facts": "error"          // 变更触及 active 用户确定事实（facts.md 约束范围）→ 门禁；文档完整性缺失=warn
+    "user-facts": "error",         // 变更触及 active 用户确定事实（facts.md 约束范围）→ 门禁；文档完整性缺失=warn
+    "adr-status-consistency": "error" // decisions/README 状态列 ↔ ADR 状态行一致（含选项菜单残留=模板疤痕）→ 门禁
   },
   "hints": { "maxDocLines": 200, "maxIndexModules": 15, "maxTreeNoted": 100 }
 }
 ```
 
 > **关联闭环语义**：`links:true` 时 check 自带扫描器（`lib-links.mjs`，支持绝对/相对/点风格/`<>`/Python import），不再依赖 `.internal/` 瞬态文件——新鲜克隆后 hook 依然守得住。`sync --links` 仍是人工预览工具（候选写 `.internal/` 不入库）。噪音边登记 `docs/map/memo/link-triage.md`（入库）豁免。
-> **派生文档**：`root.md` 模块表（职责/负责/相关模块）由 sync 从 root/<模块>.md 汇总，标记区间勿手改；手改会被 check 一致性提示。**ADR**：重大决策用 `adr.mjs` 落盘到 decisions/。**文档卫生**：check 扫描语义陈旧疤痕并建议 reconcile（`<!-- hygiene: ignore -->` 豁免）。
+> **派生文档**：`root.md` 模块表（职责/负责/相关模块）由 sync 从 root/<模块>.md 汇总，标记区间勿手改；手改会被 check 一致性提示。**ADR**：重大决策用 `adr.mjs` 落盘到 decisions/；拍板推进状态时同步两处——文件「> 状态：」行 + decisions/README.md 状态列（adr-status-consistency 规则强制一致，error 门禁；状态行残留选项菜单同违规）。**文档卫生**：check 扫描语义陈旧疤痕并建议 reconcile（`<!-- hygiene: ignore -->` 豁免）。
 
 ## 运行
 

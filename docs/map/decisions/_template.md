@@ -1,6 +1,6 @@
 # ADR-0000：<标题>
 
-> 状态：proposed ｜ accepted ｜ deprecated ｜ superseded
+> 状态：proposed
 
 ## 背景
 

@@ -12,6 +12,6 @@
 1. **改前影响分析**：先读目标模块 `docs/map/root/<模块>.md`，特别是「相关模块」节——跨模块关联（功能逻辑 ↔ 展示层等）是本项目漂移高发区。
 2. **改后同步**：新增/删除/移动文件 → `node engine/scripts/sync.mjs .`（引擎在本仓 engine/）；用户可感知改动 → 写 CHANGELOG。
 3. **提交前**：pre-commit 自动 `check` 地图；漂移会拦截 commit（提示先 sync）。
-4. **决策与变更记录**：重大架构/技术决策 → 记 ADR（`node engine/scripts/adr.mjs . "<标题>"`）；用户可感知改动 → CHANGELOG.md [Unreleased]。
+4. **决策与变更记录**：重大架构/技术决策 → 记 ADR（`node engine/scripts/adr.mjs . "<标题>"`）；**拍板即落 ADR**——方向确定的那一刻就改 ADR 文件并同步 decisions/README.md 状态列（adr-status-consistency 规则强制一致，漂移拦截 commit）；用户可感知改动 → CHANGELOG.md [Unreleased]。**计数声明去数字化**：现状类文档（README/CONTRIBUTING/root*.md/facts）不写用例数等易漂移数字（写「以运行输出为准」），仅历史快照（CHANGELOG 往期版本/SKILL 版本注记）保留原数字。
 
 _初始化于 2026-09-02 — 由 project-map-governance/init.mjs v3 生成。引擎见本仓 engine/SKILL.md_

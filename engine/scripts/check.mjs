@@ -409,10 +409,40 @@ const HINT_TREE_NOTED = cfgHints.maxTreeNoted ?? 100;
   add('user-facts', problems);
 }
 
+// 12) adr-status-consistency（decisions/README 状态列 ↔ ADR 文件状态行；状态行选项菜单残留=模板疤痕）
+{
+  const problems = [];
+  if (sev('adr-status-consistency') !== 'off') {
+    const decDir = path.join(mapDir, 'decisions');
+    const idxFile = path.join(decDir, 'README.md');
+    if (fs.existsSync(idxFile)) {
+      const index = P.parseAdrIndex(P.readText(idxFile));
+      for (const [id, row] of index) {
+        if (!['proposed', 'accepted', 'deprecated', 'superseded'].includes(row.status)) {
+          problems.push(`decisions/README ${id} 状态列非法: ${row.status || '（空）'}（应为 proposed|accepted|deprecated|superseded）`);
+          continue;
+        }
+        const file = path.join(decDir, `${id}.md`);
+        if (!fs.existsSync(file)) continue; // 死链由 dead-links 管
+        const st = P.parseAdrStatusLine(P.readText(file));
+        if (!st) problems.push(`${id}.md 缺「> 状态：」行（decisions/README 列为 ${row.status}）`);
+        else if (st.residue) problems.push(`${id}.md 状态行残留选项菜单「${st.raw.slice(0, 40)}」——应只写单一状态词（模板疤痕，见 adr.mjs）`);
+        else if (st.status !== row.status) problems.push(`${id}.md 状态行「${st.status}」与 decisions/README 状态列「${row.status}」不一致（拍板后请同步两处）`);
+      }
+      // ADR 文件存在但索引未登记 → 漏登记提示
+      for (const f of fs.readdirSync(decDir)) {
+        const m = f.match(/^(ADR-\d+)\.md$/);
+        if (m && !index.has(m[1])) problems.push(`${m[1]}.md 未登记到 decisions/README.md 索引表`);
+      }
+    }
+  }
+  add('adr-status-consistency', problems);
+}
+
 // ---- 规则注册完整性断言（防漏注册静默失效：新增规则须在 check 加块 + 此处登记 + lib-parse RULE_IDS）----
 {
   // 实际执行了规则块的 id（每块 add() 的规则名）
-  const executed = new Set(['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts']);
+  const executed = new Set(['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts', 'adr-status-consistency']);
   const reg = P.assertRuleRegistry(executed);
   if (!reg.ok) {
     const msg = `规则注册不一致: 缺 ${reg.missing.join(',')} / 多余 ${reg.extra.join(',')}（检查 check 规则块与 lib-parse RULE_IDS）`;
@@ -451,7 +481,7 @@ const LABELS = {
   'changelog': '⛔ changelog（required）：',
   'semantics': '⛔ strictSemantics：%n 个模块语义字段仍为（待填）:',
 };
-const WARN_PREFIX = { size: '📏', relatedness: '🔗', 'root-consistency': '📚', 'index-consistency': '📚', semantics: '📚', changelog: '📚', 'index-format': '📐', 'doc-hygiene': '🧹', 'untracked-strict': 'ℹ️' };
+const WARN_PREFIX = { size: '📏', relatedness: '🔗', 'root-consistency': '📚', 'index-consistency': '📚', semantics: '📚', changelog: '📚', 'index-format': '📐', 'doc-hygiene': '🧹', 'adr-status-consistency': '📋', 'untracked-strict': 'ℹ️' };
 
 let blocked = false;
 for (const e of errors) {

@@ -4,9 +4,9 @@
 
 - **路径**：`engine`
 - **类型**：目录
-- **职责**：规则引擎（Node 标准库，零依赖）——scripts/ 命令（init/sync/check/status/reconcile/adr/devref）+ lib-parse/lib-links 公共层 + mcp-server；SKILL.md 引擎文档；test/smoke.mjs 回归（84 用例）
+- **职责**：规则引擎（Node 标准库，零依赖）——scripts/ 命令（init/sync/check/status/reconcile/adr/devref）+ lib-parse/lib-links 公共层 + mcp-server；SKILL.md 引擎文档；test/smoke.mjs 回归
 - **负责**：PM 工程
-- **改动影响**：所有被治理项目的 check/sync/init 行为；hook/CLI/DSH 插件/MCP 四方契约；改动须跑 engine/test/smoke.mjs 回归 + 同步部署副本
+- **改动影响**：所有被治理项目的 check/sync/init 行为；hook/CLI/DSH 插件/MCP 四方契约；改动须跑 engine/test/smoke.mjs 回归（用例数以运行输出为准，计数声明已去数字化）+ 同步部署副本
 
 ## 相关模块
 <!-- 跨模块影响面：改本模块必须同步检查的模块。方向：本模块影响它 / 本模块依赖它 / 双向。由 sync --links 给候选，人工确认后填。 -->

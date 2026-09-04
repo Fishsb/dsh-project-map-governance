@@ -11,9 +11,9 @@
 |---|---|
 | 这是什么 / 设计要点 | `SKILL.md` 核心心智 |
 | 命令用法（init/sync/check/status/reconcile/adr/devref） | `SKILL.md` 三种操作 + 运行 |
-| 配置 `governance.json` / 11 规则表 | `SKILL.md` 治理配置 + `governance.schema.json`（规则描述由 `lib-parse.mjs` RULE_DESC 生成，`scripts/gen-schema-check.mjs --fix` 重写） |
+| 配置 `governance.json` / 12 规则表 | `SKILL.md` 治理配置 + `governance.schema.json`（规则描述由 `lib-parse.mjs` RULE_DESC 生成，`scripts/gen-schema-check.mjs --fix` 重写） |
 | 引擎版本演进 | [`CHANGELOG.md`](./CHANGELOG.md) |
-| 回归测试 | `test/smoke.mjs`（88 用例） |
+| 回归测试 | `test/smoke.mjs`（用例数以运行输出为准：`node test/smoke.mjs`） |
 
 ## 位置与同步
 
@@ -34,12 +34,12 @@ engine/
 │   ├── mcp-server.mjs      MCP stdio 薄包装
 │   ├── gen-schema-check.mjs  规则注册一致性守护（schema vs RULE_IDS）
 │   └── sync-copy.sh        引擎 → skill 副本同步
-└── test/smoke.mjs          回归（88 用例）
+└── test/smoke.mjs          回归（用例数以运行输出为准）
 ```
 
 ## 变更纪律
 
-1. 改引擎 → 回归 `test/smoke.mjs`
+1. 改引擎 → 回归 `test/smoke.mjs`（计数声明已去数字化：文档写「以运行输出为准」，勿再回填数字）
 2. 加规则 → lib-parse `RULE_IDS`/`RULE_DESC`/`defaultRules` + check 规则块与断言 + `gen-schema-check.mjs --fix` + smoke 用例（check 启动会断言注册一致）
 3. 同步副本 → `bash engine/scripts/sync-copy.sh`
 4. 记录 → `CHANGELOG.md` [Unreleased] + 插件仓根 CHANGELOG

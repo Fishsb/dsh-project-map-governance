@@ -35,7 +35,7 @@ engine/
 │   ├── lib-links.mjs   跨模块引用扫描器（相对/绝对导入）
 │   ├── init / sync / check / adr / status / reconcile / devref
 │   └── mcp-server.mjs  MCP stdio 薄包装（供 Claude Code 等其他 agent）
-└── test/smoke.mjs      引擎回归（84 用例）
+└── test/smoke.mjs      引擎回归（用例数以运行输出为准）
 ```
 
 本插件是**引擎的一层薄契约**：把同套脚本包装成 DSH 原生工具（`check` 走 `--json` 结构化返回）。因此：
