@@ -11,7 +11,7 @@
 ## 治理
 
 - [模块总览（含关联总图）](root.md)
-- [文件级地图](tree/)（粒度：文件级（全量））
+- [文件级地图](tree/)（粒度：文件级（全量）；根级散文件见 [tree/root-files.md](tree/root-files.md)）
 - [工程约定](conventions.md) — 按需创建（技术栈/命令/模式）
 - [用户确定事实](facts.md) — active 事实=已确认约束，禁破坏；冲突/方向变动升级用户（F-001~F-005）
 - [架构决策](decisions/README.md) — ADR 记录（新增：`node <skill>/scripts/adr.mjs . "<标题>"`）

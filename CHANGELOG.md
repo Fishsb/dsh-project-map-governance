@@ -9,6 +9,7 @@
 
 ### Added
 
+- **导航深度门禁（nav-depth 规则，引擎 v3.5）**：改动一个功能需在 3 次主动检索内触达所有受影响同步文档——check 从治理入口 BFS 文档指针图，孤儿文档（无入链）与超 `hints.navMaxDepth`（缺省 3）跳数的文档即违规；本仓自治理 nav-depth=error，并修复 3 处实际断链（root-files/tsconfig_json 入链、link-triage 经 root/scripts.md 回填指针）。
 - **ADR 状态一致性门禁（adr-status-consistency 规则，引擎 v3.4）**：`decisions/README.md` 状态列 ↔ `ADR-NNNN.md`「> 状态：」行强制一致 + 状态行选项菜单残留拦截（默认 error=漂移拦截 commit）——把 dsh-managing-memory 治理漂移事故（ADR 拍板后文件/索引状态失真，靠 reconcile 人读兜底）升级为 check 机检；`adr.mjs` 生成改为单一状态词从源头根治模板疤痕。
 - **计数声明去数字化（治理纪律）**：现状类文档（README/CONTRIBUTING/root*.md/facts）不再写用例数等易漂移数字（改「以运行输出为准」），历史快照保留原数字——杜绝 v3.1→v3.3 期间 8 处「84 用例」陈旧计数式的漂移。
 

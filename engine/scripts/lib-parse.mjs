@@ -16,7 +16,7 @@ import path from 'node:path';
 export const TABLE_BEGIN = '<!-- MODULE_TABLE_BEGIN -->';
 export const TABLE_END = '<!-- MODULE_TABLE_END -->';
 export const CONFIG_VERSION = 3;
-export const RULE_IDS = ['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts', 'adr-status-consistency'];
+export const RULE_IDS = ['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts', 'adr-status-consistency', 'nav-depth'];
 export const SEVERITIES = ['off', 'warn', 'error'];
 // 规则描述单一源（schema 生成/文档引用；加规则在此补一行 + defaultRules + check 规则块 + smoke）
 export const RULE_DESC = {
@@ -32,6 +32,7 @@ export const RULE_DESC = {
   'doc-hygiene': '语义陈旧疤痕扫描（corrected/reversed/TODO/⚠/过时…；豁免标记豁免）',
   'user-facts': '变更触及 active 用户确定事实（facts.md 约束范围）→ 按 severity；默认 error=门禁。文档完整性缺失恒为 warn 提示',
   'adr-status-consistency': 'decisions/README.md 状态列 ↔ ADR-NNNN.md 状态行一致性 + 状态行选项菜单残留（默认 error=门禁）',
+  'nav-depth': '导航可达性：治理文档从 AGENTS.md 起 ≤3 跳可达（hints.navMaxDepth 可调），不可达/超深=违规（默认 warn；模型 3 次检索预算）',
 };
 // 校验规则注册完整性：check 实际执行的规则 id 集 = RULE_IDS（防漏注册静默失效）
 export function assertRuleRegistry(executedIds) {
@@ -84,6 +85,7 @@ export function defaultRules() {
     'doc-hygiene': 'warn',
     'user-facts': 'error',   // 变更触及 active 用户确定事实 → 门禁（默认 error）；文档完整性缺失为 warn 提示
     'adr-status-consistency': 'error', // decisions/README 状态列 ↔ ADR 文件状态行一致（默认 error=门禁；状态行残留选项菜单同违规）
+    'nav-depth': 'warn',    // 导航可达性 ≤3 跳（默认 warn 提示；error 也可，涉新文件时 sync 提示引导补链）
   };
 }
 
@@ -284,6 +286,82 @@ export function parseAdrIndex(text) {
     if (m) map.set(m[1], { title: m[2].trim(), status: m[3].trim().toLowerCase(), date: m[4].trim() });
   }
   return map;
+}
+
+// ---- 导航可达性（nav-depth 规则的解析层）----
+// 「3 次检索预算」：AGENTS.md/CLAUDE.md 为自动加载入口（0 跳），任何治理文档从入口起 ≤N 跳可达。
+// 可跟随的文档指针（治理导航约定，四类 + ADR 隐式登记）：
+//   1) markdown 链接 ](rel)   2) 反引号 `../x.md`（相对所在文档）
+//   3) 反引号 `root|tree|decisions|memo|devref/x.md`（相对 docs/map）
+//   4) 「见/详见/参见/参考 x.md」  5) decisions/README.md 表内登记的 ADR-NNNN
+export function navDepthAudit(target, mapDir, maxDepth = 3) {
+  const relToTarget = (f) => path.relative(target, f).replace(/\\/g, '/');
+  const docs = [];
+  (function walk(d) {
+    let es; try { es = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
+    for (const e of es) {
+      if (e.isDirectory()) walk(path.join(d, e.name));
+      else if (e.name.endsWith('.md') && !e.name.startsWith('_')) docs.push(relToTarget(path.join(d, e.name)));
+    }
+  })(mapDir);
+  const docSet = new Set(docs);
+
+  const MD_LINK = /\]\(([^)]+)\)/g;
+  const REL_BK = /`(\.\.?\/[^`\n]+\.md)`/g;
+  const MAP_BK = /`(?:docs\/map\/)?((?:root|tree|decisions|memo|devref)\/[\w\-./]+\.md)`/g;
+  const MAP_ABS = /`(docs\/map\/[\w\-./]+\.md)`/g;
+  const SEE = /(?:见|详见|参见|参考)\s*`?([\w\-./]+\.md)/g;
+  function refsOf(file, baseDir) {
+    const text = readText(file) || '';
+    const out = new Set();
+    const addFrom = (p, base) => {
+      if (!p) return;
+      const rp = p.split('#')[0];
+      const r = relToTarget(path.resolve(base, rp));
+      if (docSet.has(r) && r !== relToTarget(file)) { out.add(r); return; }
+      // 目录级指针（如 index 的「文件级地图](tree/)」）：展开为目录下全部文档
+      const abs = path.resolve(base, rp);
+      if (fs.existsSync(abs) && fs.statSync(abs).isDirectory()) {
+        const dirRel = relToTarget(abs).replace(/\/$/, '');
+        for (const d of docs) if (d.startsWith(dirRel + '/')) out.add(d);
+      }
+    };
+    for (const m of text.matchAll(MD_LINK)) addFrom(m[1], baseDir);
+    for (const m of text.matchAll(REL_BK)) addFrom(m[1], baseDir);
+    for (const m of text.matchAll(MAP_ABS)) addFrom(m[1], target);  // docs/map/ 前缀路径：相对仓库根解析
+    for (const m of text.matchAll(MAP_BK)) addFrom(path.join('docs/map', m[1]), target);
+    for (const m of text.matchAll(SEE)) {
+      const p = m[1];
+      if (/^(root|tree|decisions|memo|devref)\//.test(p)) addFrom(path.join('docs/map', p), target); // 「见 root/x.md」相对地图根
+      else if (p.startsWith('docs/map/')) addFrom(p, target);
+      else addFrom(p, baseDir);
+    }
+    if (relToTarget(file) === 'docs/map/decisions/README.md') {
+      for (const m of text.matchAll(/ADR-(\d+)/g)) {
+        const r = `docs/map/decisions/ADR-${m[1]}.md`;
+        if (docSet.has(r)) out.add(r);
+      }
+    }
+    return [...out];
+  }
+
+  const edges = new Map();
+  for (const e of ['AGENTS.md', 'CLAUDE.md']) {
+    if (fs.existsSync(path.join(target, e))) edges.set(e, refsOf(path.join(target, e), target));
+  }
+  for (const d of docs) edges.set(d, refsOf(path.join(target, d), path.dirname(path.join(target, d))));
+
+  const depth = new Map();
+  const q = [];
+  for (const e of edges.keys()) if (e.endsWith('.md') && !e.includes('/')) { depth.set(e, 0); q.push(e); }
+  while (q.length) {
+    const cur = q.shift();
+    const dep = depth.get(cur);
+    for (const nx of edges.get(cur) || []) if (!depth.has(nx)) { depth.set(nx, dep + 1); q.push(nx); }
+  }
+  const unreachable = docs.filter((d) => !depth.has(d));
+  const deep = docs.filter((d) => (depth.get(d) ?? Infinity) > maxDepth).map((d) => ({ doc: d, depth: depth.get(d) }));
+  return { docs, depth, unreachable, deep, maxDepth };
 }
 
 // ---- 用户确定事实（facts.md）----

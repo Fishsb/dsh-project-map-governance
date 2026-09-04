@@ -13,5 +13,6 @@
 - `src/` — 单向：build.sh 编译 src→lib，二者构建契约同构（改 src 需同步构建脚本）
 - `engine/` — 无代码依赖：各自 scripts/ 子目录同名，但仓库 scripts/（build.sh）与 engine/scripts/（引擎命令）相互独立（link-triage 已豁免误判）
 - `package.json` — 本模块文件：build 脚本入口与 scripts/build.sh 绑定
+- `docs/map/memo/link-triage.md` — 噪音豁免登记处：engine↔scripts 误判边在此豁免（relatedness 提示时先查此文件）
 
 > 文件级细节见 ../tree/scripts.md。

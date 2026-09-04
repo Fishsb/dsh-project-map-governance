@@ -439,10 +439,22 @@ const HINT_TREE_NOTED = cfgHints.maxTreeNoted ?? 100;
   add('adr-status-consistency', problems);
 }
 
+// 13) nav-depth（导航可达性：从 AGENTS/CLAUDE 起 ≤N 跳；「3 次检索预算」门禁）
+{
+  const problems = [];
+  if (sev('nav-depth') !== 'off') {
+    const maxDepth = (cfgHints.navMaxDepth ?? 3);
+    const audit = P.navDepthAudit(target, mapDir, maxDepth);
+    for (const d of audit.unreachable) problems.push(`${d} 从治理入口不可达（无任何文档指针指向）——补入链（index/AGENTS/root 内加「见 …」指针）`);
+    for (const { doc, depth } of audit.deep) problems.push(`${doc} 距入口 ${depth} 跳 > 预算 ${maxDepth}（模型 3 次检索内应触达所有受影响文档）——压缩层级或提升入链层级`);
+  }
+  add('nav-depth', problems);
+}
+
 // ---- 规则注册完整性断言（防漏注册静默失效：新增规则须在 check 加块 + 此处登记 + lib-parse RULE_IDS）----
 {
   // 实际执行了规则块的 id（每块 add() 的规则名）
-  const executed = new Set(['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts', 'adr-status-consistency']);
+  const executed = new Set(['dead-links', 'untracked-strict', 'relatedness', 'changelog', 'semantics', 'size', 'root-consistency', 'index-consistency', 'index-format', 'doc-hygiene', 'user-facts', 'adr-status-consistency', 'nav-depth']);
   const reg = P.assertRuleRegistry(executed);
   if (!reg.ok) {
     const msg = `规则注册不一致: 缺 ${reg.missing.join(',')} / 多余 ${reg.extra.join(',')}（检查 check 规则块与 lib-parse RULE_IDS）`;
@@ -481,7 +493,7 @@ const LABELS = {
   'changelog': '⛔ changelog（required）：',
   'semantics': '⛔ strictSemantics：%n 个模块语义字段仍为（待填）:',
 };
-const WARN_PREFIX = { size: '📏', relatedness: '🔗', 'root-consistency': '📚', 'index-consistency': '📚', semantics: '📚', changelog: '📚', 'index-format': '📐', 'doc-hygiene': '🧹', 'adr-status-consistency': '📋', 'untracked-strict': 'ℹ️' };
+const WARN_PREFIX = { size: '📏', relatedness: '🔗', 'root-consistency': '📚', 'index-consistency': '📚', semantics: '📚', changelog: '📚', 'index-format': '📐', 'doc-hygiene': '🧹', 'adr-status-consistency': '📋', 'nav-depth': '🧭', 'untracked-strict': 'ℹ️' };
 
 let blocked = false;
 for (const e of errors) {

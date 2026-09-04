@@ -17,7 +17,9 @@
     "index-consistency": "warn",
     "index-format": "warn",
     "doc-hygiene": "warn",
-    "user-facts": "error"
+    "user-facts": "error",
+    "adr-status-consistency": "error",
+    "nav-depth": "error"
   },
   "links": true
 }

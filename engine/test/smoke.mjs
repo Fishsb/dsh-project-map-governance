@@ -469,5 +469,45 @@ r = run([path.join(SKILL, 'check.mjs'), ad, '--json']);
 const adj3 = parseJson(r.out);
 check('索引状态词非法 → 拦截', adj3 && adj3.errors.some((e) => e.rule === 'adr-status-consistency' && e.problems.some((p) => p.includes('非法'))), r.out.slice(0, 300));
 
+// ============ T24 nav-depth 导航可达性（3 次检索预算） ============
+console.log('\n[T24] nav-depth');
+const nv = path.join(BASE, 'nav');
+fs.mkdirSync(path.join(nv, 'src'), { recursive: true });
+fs.writeFileSync(path.join(nv, 'src', 'a.js'), 'export const a=1;\n');
+run([path.join(SKILL, 'init.mjs'), nv, '--level', 'files']);
+// 正向：init 刚生成的标准结构（index→root→tree）全部 ≤3 跳 → 无 nav-depth 提示
+r = run([path.join(SKILL, 'check.mjs'), nv, '--json']);
+const nvj0 = parseJson(r.out);
+check('标准结构全部 ≤3 跳（无误报）', nvj0 && !nvj0.warns.some((w) => w.rule === 'nav-depth') && !nvj0.errors.some((e) => e.rule === 'nav-depth'), r.out.slice(0, 300));
+// 反向1：孤儿文档（无任何指针指向）→ 不可达提示
+fs.mkdirSync(path.join(nv, 'docs/map/memo'), { recursive: true });
+fs.writeFileSync(path.join(nv, 'docs/map/memo', 'orphan.md'), '# 孤儿\n\n没有任何文档指向我。\n');
+r = run([path.join(SKILL, 'check.mjs'), nv, '--json']);
+const nvj1 = parseJson(r.out);
+check('孤儿文档 → 不可达提示', nvj1 && nvj1.warns.some((w) => w.rule === 'nav-depth' && w.problems.some((p) => p.includes('orphan.md') && p.includes('不可达'))), r.out.slice(0, 400));
+// 修复：index.md 补指针 → 提示消失
+fs.writeFileSync(path.join(nv, 'docs/map/index.md'), fs.readFileSync(path.join(nv, 'docs/map/index.md'), 'utf8') + '- [孤儿文档](memo/orphan.md) — 测试补链\n');
+r = run([path.join(SKILL, 'check.mjs'), nv, '--json']);
+const nvj2 = parseJson(r.out);
+check('补链后提示消失', nvj2 && !nvj2.warns.some((w) => w.rule === 'nav-depth' && w.problems.some((p) => p.includes('orphan.md'))), r.out.slice(0, 300));
+// 反向2：超深链 index→a→b→c→d（4 跳）→ 超预算提示
+for (const m of ['chaina', 'chainb', 'chainc', 'chaind']) fs.writeFileSync(path.join(nv, 'docs/map/root', `${m}.md`), `# 模块 ${m}\n\n- **职责**：链式测试\n- **负责**：t\n- **改动影响**：t\n\n## 相关模块\n\n> 文件级细节见 ../tree/${m}.md。\n`);
+const idxText = fs.readFileSync(path.join(nv, 'docs/map/index.md'), 'utf8');
+fs.writeFileSync(path.join(nv, 'docs/map/index.md'), idxText + '- `chaina` — 见 root/chaina.md（链式测试）\n');
+fs.writeFileSync(path.join(nv, 'docs/map/root/chaina.md'), fs.readFileSync(path.join(nv, 'docs/map/root/chaina.md'), 'utf8') + '\n链式下钻见 `root/chainb.md`。\n');
+fs.writeFileSync(path.join(nv, 'docs/map/root/chainb.md'), fs.readFileSync(path.join(nv, 'docs/map/root/chainb.md'), 'utf8') + '\n链式下钻见 `root/chainc.md`。\n');
+fs.writeFileSync(path.join(nv, 'docs/map/root/chainc.md'), fs.readFileSync(path.join(nv, 'docs/map/root/chainc.md'), 'utf8') + '\n链式下钻见 `root/chaind.md`。\n');
+r = run([path.join(SKILL, 'check.mjs'), nv, '--json']);
+const nvj3 = parseJson(r.out);
+check('4 跳链 → 超预算提示', nvj3 && nvj3.warns.some((w) => w.rule === 'nav-depth' && w.problems.some((p) => p.includes('chaind.md') && p.includes('> 预算'))), r.out.slice(0, 400));
+// 反向3：hints.navMaxDepth 放宽到 5 → 提示消失（阈值可配；链实深 5：AGENTS→index→a→b→c→d）
+const nvCfg = path.join(nv, 'docs/map/governance.json');
+const nvCfgObj = JSON.parse(fs.readFileSync(nvCfg, 'utf8'));
+nvCfgObj.hints = { ...nvCfgObj.hints, navMaxDepth: 5 };
+fs.writeFileSync(nvCfg, JSON.stringify(nvCfgObj, null, 2) + '\n');
+r = run([path.join(SKILL, 'check.mjs'), nv, '--json']);
+const nvj4 = parseJson(r.out);
+check('navMaxDepth=5 后超深提示消失', nvj4 && !nvj4.warns.some((w) => w.rule === 'nav-depth' && w.problems.some((p) => p.includes('> 预算'))), r.out.slice(0, 300));
+
 console.log(`\n==== 冒烟结果: ${pass} PASS / ${fail} FAIL ====`);
 process.exit(fail ? 1 : 0);

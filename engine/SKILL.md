@@ -139,7 +139,8 @@ manifest：`{ "dir": "docs/devref", "docs": [{ "name", "url", "note" }] }`；url
     "index-format": "warn",        // llms.txt 式 H1+摘要 + 导航概况规范（≤40 字高密度/失真）
     "doc-hygiene": "warn",         // 语义陈旧疤痕（corrected/reversed/TODO/⚠/过时…；豁免标记豁免）
     "user-facts": "error",         // 变更触及 active 用户确定事实（facts.md 约束范围）→ 门禁；文档完整性缺失=warn
-    "adr-status-consistency": "error" // decisions/README 状态列 ↔ ADR 状态行一致（含选项菜单残留=模板疤痕）→ 门禁
+    "adr-status-consistency": "error", // decisions/README 状态列 ↔ ADR 状态行一致（含选项菜单残留=模板疤痕）→ 门禁
+    "nav-depth": "warn"            // 导航可达性：从 AGENTS 起 ≤3 跳（hints.navMaxDepth 可调）——「3 次检索预算」；自治理项目可升 error
   },
   "hints": { "maxDocLines": 200, "maxIndexModules": 15, "maxTreeNoted": 100 }
 }
@@ -162,6 +163,7 @@ node "<skill-dir>/scripts/mcp-server.mjs"                               # MCP st
 ```
 
 > **规则模型（v3）**：`governance.json.rules` 每条规则 severity = off|warn|error；error 级触发 pre-commit 拦截（exit 1），warn = 提示。legacy 配置（strict/strictLinks/changelog/strictSemantics）首次运行自动迁移为 rules（configVersion 3），无需手改。
+> **导航深度（nav-depth，v3.5）**：模型改代码时应在 **3 次主动检索内**触达所有受影响的同步文档（AGENTS/CLAUDE 自动加载 = 0 次，每跟一个文档指针 = 1 次）。check 从入口 BFS 文档指针图（md 链接 / 反引号相对路径 / 地图锚定 `root|tree/…` /「见 x.md」/ ADR 隐式登记，目录指针展开），不可达或超 `hints.navMaxDepth`（缺省 3）即违规——孤儿文档补入链、超深链压层级。
 
 ## 形态与集成（引擎不变，三层契约）
 

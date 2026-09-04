@@ -8,6 +8,8 @@
 
 ### Added
 
+- **nav-depth 导航可达性规则（v3.5）**：模型改代码应在 3 次主动检索内触达所有受影响同步文档——check 从治理入口（AGENTS/CLAUDE=自动加载 0 跳）BFS 文档指针图（md 链接/反引号相对路径/地图锚定 `root|tree|decisions|memo|devref/…`/「见 x.md」/decisions/README 隐式登记 ADR；目录指针如 `tree/` 展开为目录下文档），不可达或超 `hints.navMaxDepth`（缺省 3）即违规：孤儿补入链、超深压层级。默认 warn；本仓自治理升 error。13 规则注册同步 + smoke T24 五用例（标准结构无误报/孤儿检出/补链修复/4 层链超深/hints 放宽）。
+
 - **adr-status-consistency 规则（v3.4）**：`decisions/README.md` 状态列 ↔ `ADR-NNNN.md`「> 状态：」行一致性校验（默认 error=门禁）；状态行残留选项菜单（`｜ proposed ｜ …`）判为模板疤痕一并拦截；ADR 文件未登记索引同样报错。`adr.mjs` 生成改为单一状态词（选项菜单移除，疤痕从源头根治）；解析层新增 `parseAdrStatusLine`/`parseAdrIndex`（lib-parse 统一解析层）。源自 dsh-managing-memory 治理漂移事故复盘（ADR v1/v2 状态漂移靠 reconcile 人读兜底 → 升级为 check 机检拦截）。12 规则注册同步（RULE_IDS/RULE_DESC/defaultRules/schema/smoke T23 七用例）。
 
 - ~~**引擎源码仓 + 自治理（self-hosting）**~~（已废弃，见 ADR-0002）：曾将引擎纳入独立 git 仓 `D:\FF\dsh-project-map-governance-engine` 并自治理；该方案被 ADR-0002 取代（引擎并入插件仓 `engine/` 子目录），独立仓已删除。保留此条仅为记录历史。
