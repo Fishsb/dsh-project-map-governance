@@ -116,6 +116,18 @@ devref <项目路径> <manifest.json>
 
 manifest：`{ "dir": "docs/devref", "docs": [{ "name", "url", "note" }] }`；url 支持 GitHub contents API（自动 base64 解码）或任意文本 URL；幂等可增量重跑。**政策红线**：开发参考文档不进 GitHub（gitignore 强制）。
 
+### 6. devref-card — 项目知识卡库写门（route=project 知识卡唯一写入口）
+
+承接「项目知识卡库」（ADR-0005 协作联动：记忆插件蒸馏把 route=project 的知识写进项目卡库而非记忆库）。三卡册 `docs/devref/cards/{how-to|reference|decision}.md` + `INDEX.md` 登记表，本地治理（gitignore 排除，不推 GitHub）：
+
+```
+devref-card <项目路径> --init [--dir docs/devref]                    # 建卡库骨架（三卡册 + INDEX + AGENTS 双查纪律行 + gitignore）
+devref-card <项目路径> --list [--dir docs/devref]                    # 卡清单
+devref-card <项目路径> --title <标题> --card-type how-to|reference|decision --text <正文> --source <溯源> [--status proposed|accepted] [--dir docs/devref]
+```
+
+写门安全阀（对齐 memory-append/knowledge-append）：①卡册不存在 → exit 2 列出可册（不自动建散落卡册）②写前备份（`.internal/backup-*`）③INDEX 登记幂等（同题重跑提示不重复登记，软上限提示拆册）④正文限长（2000 字符）⑤溯源必带（`--source`，如 `[来源:memory:…]`）⑥`--init` 幂等写 AGENTS.md「开发知识双查纪律」行（过渡期卡库与记忆库双查并列，迁移完成后卡库权威）。退出码：0=成功 / 1=失败 / 2=参数或卡册非法 / 3=用法错误。
+
 ## 治理配置 `docs/map/governance.json`
 
 ```json
@@ -160,6 +172,7 @@ node "<skill-dir>/scripts/status.mjs" <项目路径> [--json]               # �
 node "<skill-dir>/scripts/adr.mjs"    <项目路径> "<决策标题>" [--status accepted]
 node "<skill-dir>/scripts/reconcile.mjs" <项目路径> [--days 30] [--done] [--json]
 node "<skill-dir>/scripts/devref.mjs" <项目路径> <manifest.json>         # init 之后推荐
+node "<skill-dir>/scripts/devref-card.mjs" <项目路径> --init | --list | --title … --card-type … --text … --source …   # 项目知识卡库写门（ADR-0005）
 node "<skill-dir>/scripts/mcp-server.mjs"                               # MCP stdio 服务（其他 agent 用）
 ```
 

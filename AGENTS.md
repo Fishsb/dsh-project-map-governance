@@ -12,6 +12,7 @@
 1. **改前影响分析**：先读目标模块 `docs/map/root/<模块>.md`，特别是「相关模块」节——跨模块关联（功能逻辑 ↔ 展示层等）是本项目漂移高发区。
 2. **改后同步**：新增/删除/移动文件 → `node engine/scripts/sync.mjs .`（引擎在本仓 engine/）；用户可感知改动 → 写 CHANGELOG。
 3. **提交前**：pre-commit 自动 `check` 地图；漂移会拦截 commit（提示先 sync）。
-4. **决策与变更记录**：重大架构/技术决策 → 记 ADR（`node engine/scripts/adr.mjs . "<标题>"`）；**拍板即落 ADR**——方向确定的那一刻就改 ADR 文件并同步 decisions/README.md 状态列（adr-status-consistency 规则强制一致，漂移拦截 commit）；用户可感知改动 → CHANGELOG.md [Unreleased]。**计数声明去数字化**：现状类文档（README/CONTRIBUTING/root*.md/facts）不写用例数等易漂移数字（写「以运行输出为准」），仅历史快照（CHANGELOG 往期版本/SKILL 版本注记）保留原数字。
+4. **决策与变更记录**：重大架构/技术决策 → 记 ADR（`node engine/scripts/adr.mjs . "<标题>"`）；**拍板即落 ADR**——方向确定的那一刻就改 ADR 文件并同步 decisions/README.md 状态列（adr-status-consistency 规则强制一致，漂移拦截 commit）；用户可感知改动 → CHANGELOG.md [Unreleased]。**计数声明去数字化**：现状类文档（README/CONTRIBUTING/root*.md/facts）不写用例数等易漂移数字（写「以运行输出为准」），仅历史快照（CHANGELOG 往期版本/SKILL 版本注记）保留原数字。**跨插件缺陷归一**：横跨本插件与记忆插件（知识整理引擎）的根本缺陷 → ADR 记主仓 Fishsb/dsh-managing-memory（协作中枢），本仓文档留指针——避免三处碎片记录。
+5. **协作宪章（与记忆插件指挥-执行关系；记忆 SKILL 同源声明）**：裁决序 = 用户实时拍板 > 记忆 L1 铁律 > 本插件治理门禁（facts/check）> 记忆 L2/L3 流程 > 本插件便利工具。本插件 = **执行者两模块**（项目地图防漂移 + 项目知识卡库承载）；记忆插件 = **指挥者**（R0 归属裁决 + 跨插件调度：卡库迁移发现/审计触发）。**门禁等价**：本插件 user-facts 门禁与记忆侧方案确认门同构——拦截即升级用户拍板，非对抗关系。知识双查（过渡期）：devref 卡库与记忆 notes 并列，迁移完成后卡库权威。
 
 _初始化于 2026-09-02 — 由 project-map-governance/init.mjs v3 生成。引擎见本仓 engine/SKILL.md_

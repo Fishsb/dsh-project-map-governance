@@ -8,6 +8,8 @@
 
 ### Added
 
+- **devref-card 项目知识卡库写门（ADR-0005 联动）**：route=project 知识卡唯一写入口——三卡册 `docs/devref/cards/{how-to|reference|decision}.md` + INDEX 登记表；安全阀对齐 memory-append（卡册不存在 exit 2 不自动建/写前备份/正文限长 2000/溯源必带 `[来源:…]`/同题 INDEX 幂等）；`--init` 一键建骨架（含 AGENTS「开发知识双查纪律」幂等行 + gitignore 本地化 `docs/devref/`）；`--list` 卡清单；退出码 0=成功 1=失败 2=卡册非法 3=用法。承接 dsh-managing-memory 知识整理引擎（engine/knowledge-append --project-card）的 project 路由落点（skill 副本已同步，哈希一致）。
+
 - **tree-duty 职责待填规则（v3.5 审查补充）**：`tree/*.md` 的「(职责待填)」行数提示（默认 warn）——文件级地图「每文件一句职责」是下钻价值所在，此前不进任何规则检查。14 规则注册同步 + smoke T25 两用例（103 PASS）。
 - **index-format 失真判定移除（v3.5 审查补充）**：「概况失真」子串关联判定（概况首段须在职责中词面命中）对中文短概况脆弱——职责措辞微调即误报。保留 ≤40 字格式校验，语义正确性交 reconcile 人读防线（与 ADR 状态等机检规则分工：格式机检/语义人读）。
 - **nav-depth 导航可达性规则（v3.5）**：模型改代码应在 3 次主动检索内触达所有受影响同步文档——check 从治理入口（AGENTS/CLAUDE=自动加载 0 跳）BFS 文档指针图（md 链接/反引号相对路径/地图锚定 `root|tree|decisions|memo|devref/…`/「见 x.md」/decisions/README 隐式登记 ADR；目录指针如 `tree/` 展开为目录下文档），不可达或超 `hints.navMaxDepth`（缺省 3）即违规：孤儿补入链、超深压层级。默认 warn；本仓自治理升 error。13 规则注册同步 + smoke T24 五用例（标准结构无误报/孤儿检出/补链修复/4 层链超深/hints 放宽）。
